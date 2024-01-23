@@ -3,6 +3,7 @@ package messenger
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 
 	astriaGrpc "buf.build/gen/go/astria/astria/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
@@ -22,7 +23,7 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Al
 }
 
 func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaPb.Block, error) {
-	if height > uint32(len(s.m.Blocks)) {
+	if height > s.m.Height() {
 		return nil, errors.New("block not found")
 	}
 
@@ -57,11 +58,16 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 	for _, id := range req.Identifiers {
 		switch id.Identifier.(type) {
 		case *astriaPb.BlockIdentifier_BlockNumber:
-			block, err := s.getSingleBlock(uint32(id.GetBlockNumber()))
+			height := uint32(id.GetBlockNumber())
+			block, err := s.m.GetSingleBlock(height)
 			if err != nil {
 				return nil, err
 			}
-			res.Blocks = append(res.Blocks, block)
+			blockPb, err := block.ToPb()
+			if err != nil {
+				return nil, err
+			}
+			res.Blocks = append(res.Blocks, blockPb)
 		}
 	}
 	return res, nil
@@ -72,19 +78,33 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 		return nil, errors.New("invalid prev block hash")
 	}
 	txs := []Transaction{}
-	for _, tx := range req.Transactions {
-		txs = append(txs, NewTransaction(tx))
+	for _, txBytes := range req.Transactions {
+		tx := &Transaction{}
+		json.Unmarshal(txBytes, *tx)
+		txs = append(txs, *tx)
 	}
 	block := NewBlock(uint32(len(s.m.Blocks)), txs, req.Timestamp.AsTime())
 	s.m.Blocks = append(s.m.Blocks, block)
 
-	return block.toPb(), nil
+	blockPb, err := block.ToPb()
+	if err != nil {
+		return nil, errors.New("failed to convert block to protobuf")
+	}
+	return blockPb, nil
 }
 
 func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
+	soft, err := s.m.Blocks[len(s.m.Blocks)-1].ToPb()
+	if err != nil {
+		return nil, errors.New("failed to convert soft block to protobuf")
+	}
+	hard, err := s.m.Blocks[len(s.m.Blocks)-1].ToPb()
+	if err != nil {
+		return nil, errors.New("failed to convert hard block to protobuf")
+	}
 	res := &astriaPb.CommitmentState{
-		Soft: s.m.Blocks[len(s.m.Blocks)-1].toPb(),
-		Firm: s.m.Blocks[len(s.m.Blocks)-1].toPb(),
+		Soft: soft,
+		Firm: hard,
 	}
 	return res, nil
 }

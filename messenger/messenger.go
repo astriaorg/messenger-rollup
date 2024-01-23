@@ -1,6 +1,7 @@
 package messenger
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -9,13 +10,9 @@ import (
 )
 
 type Transaction struct {
-	message string
-}
-
-func NewTransaction(b []byte) Transaction {
-	return Transaction{
-		message: string(b),
-	}
+	Sender   string `json:"sender"`
+	Message  string `json:"message"`
+	Priority uint32 `json:"priority"`
 }
 
 type Block struct {
@@ -36,10 +33,14 @@ func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
 	}
 }
 
-func (b *Block) toPb() *astriaPb.Block {
+func (b *Block) ToPb() (*astriaPb.Block, error) {
 	txs := [][]byte{}
 	for _, tx := range b.txs {
-		txs = append(txs, []byte(tx.message))
+		if bytes, err := json.Marshal(tx); err != nil {
+			txs = append(txs, bytes)
+		} else {
+			return nil, errors.New("failed to marshal transaction into bytes")
+		}
 	}
 
 	return &astriaPb.Block{
@@ -47,6 +48,16 @@ func (b *Block) toPb() *astriaPb.Block {
 		Hash:            b.hash,
 		ParentBlockHash: b.parent_hash,
 		Timestamp:       timestamppb.New(b.timestamp),
+	}, nil
+}
+
+func GenesisBlock() Block {
+	return Block{
+		parent_hash: []byte{0x0},
+		hash:        []byte{0x0},
+		height:      0,
+		timestamp:   time.Now(),
+		txs:         []Transaction{},
 	}
 }
 
@@ -56,7 +67,7 @@ type Messenger struct {
 
 func NewMessenger() *Messenger {
 	return &Messenger{
-		Blocks: []Block{},
+		Blocks: []Block{GenesisBlock()},
 	}
 }
 
@@ -69,4 +80,8 @@ func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 
 func (m *Messenger) GetCurrentBlock() (*Block, error) {
 	return m.GetSingleBlock(uint32(len(m.Blocks) - 1))
+}
+
+func (m *Messenger) Height() uint32 {
+	return uint32(len(m.Blocks))
 }
