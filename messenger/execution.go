@@ -32,8 +32,8 @@ func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaP
 
 	return &astriaPb.Block{
 		Number:          height,
-		Hash:            block.hash,
-		ParentBlockHash: s.m.Blocks[height-1].hash,
+		Hash:            block.hash[:],
+		ParentBlockHash: s.m.Blocks[height-1].hash[:],
 		Timestamp:       timestamp,
 	}, nil
 }
@@ -74,7 +74,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 }
 
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
-	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].hash) {
+	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].hash[:]) {
 		return nil, errors.New("invalid prev block hash")
 	}
 	txs := []Transaction{}
