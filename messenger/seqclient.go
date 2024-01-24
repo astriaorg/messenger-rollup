@@ -70,11 +70,14 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 		return nil, err
 	}
 	if resp.Code == 4 {
+		// fetch new nonce
 		newNonce, err := sc.c.GetNonce(context.Background(), sc.signer.Address())
 		if err != nil {
 			return nil, err
 		}
 		sc.nonce = newNonce
+
+		// create new tx
 		unsigned = &astriaPb.UnsignedTransaction{
 			Nonce:   sc.nonce,
 			Actions: unsigned.Actions,
@@ -83,6 +86,8 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 		if err != nil {
 			return nil, err
 		}
+
+		// submit new tx
 		resp, err = sc.broadcastTxSync(signed)
 		if err != nil {
 			return nil, err
