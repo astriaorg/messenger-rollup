@@ -16,8 +16,8 @@ type Transaction struct {
 }
 
 type Block struct {
-	parent_hash []byte
-	hash        []byte
+	parent_hash [32]byte
+	hash        [32]byte
 	height      uint32
 	timestamp   time.Time
 	txs         []Transaction
@@ -25,8 +25,8 @@ type Block struct {
 
 func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
 	return Block{
-		parent_hash: []byte{0x0},
-		hash:        []byte{0x0},
+		parent_hash: [32]byte{0x0},
+		hash:        [32]byte{0x0},
 		height:      height,
 		txs:         txs,
 		timestamp:   timestamp,
@@ -45,16 +45,16 @@ func (b *Block) ToPb() (*astriaPb.Block, error) {
 
 	return &astriaPb.Block{
 		Number:          b.height,
-		Hash:            b.hash,
-		ParentBlockHash: b.parent_hash,
+		Hash:            b.hash[:],
+		ParentBlockHash: b.parent_hash[:],
 		Timestamp:       timestamppb.New(b.timestamp),
 	}, nil
 }
 
 func GenesisBlock() Block {
 	return Block{
-		parent_hash: []byte{0x0},
-		hash:        []byte{0x0},
+		parent_hash: [32]byte{0x00000000},
+		hash:        [32]byte{0x00000000},
 		height:      0,
 		timestamp:   time.Now(),
 		txs:         []Transaction{},
