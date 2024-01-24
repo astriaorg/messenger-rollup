@@ -104,6 +104,7 @@ func (a *App) Run() {
 	}()
 
 	// run rest api server
+	a.setupRestRoutes()
 	server := a.makeRestServer()
 	err := server.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
