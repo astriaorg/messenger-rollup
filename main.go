@@ -7,6 +7,6 @@ func main() {
 
 	// load env vars
 
-	app := messenger.NewApp(":50051", ":26658", ":8080")
+	app := messenger.NewApp(":50051", "localhost:26658", ":8080")
 	app.Run()
 }

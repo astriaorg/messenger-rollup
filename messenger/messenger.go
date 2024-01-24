@@ -48,40 +48,20 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	sender, ok := vars["sender"]
-	if !ok {
-		fmt.Printf("error getting sender from request\n")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	message, ok := vars["message"]
-	if !ok {
-		fmt.Printf("error getting message from request\n")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	priorityStr, ok := vars["priority"]
-	if !ok {
-		fmt.Printf("error getting priority from request\n")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	priority, err := strconv.Atoi(priorityStr)
+	var tx Transaction
+	err := json.NewDecoder(r.Body).Decode(&tx)
 	if err != nil {
-		fmt.Printf("error converting priority to int: %s\n", err)
+		fmt.Printf("error decoding transaction: %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	println("received tx: sender: %s, message: %s, priority: %d", sender, message, priority)
+	a.sequencerClient.SendMessage(tx)
 }
 
 type App struct {
 	executionAddr   string
 	sequencerAddr   string
-	sequencerClient http.Client
+	sequencerClient SequencerClient
 	restRouter      *mux.Router
 	restAddr        string
 	messenger       *Messenger
@@ -94,7 +74,7 @@ func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
 	return &App{
 		executionAddr:   executionAddr,
 		sequencerAddr:   sequencerAddr,
-		sequencerClient: http.Client{},
+		sequencerClient: *NewSequencerClient(sequencerAddr),
 		restRouter:      router,
 		restAddr:        restAddr,
 		messenger:       m,
