@@ -1,6 +1,6 @@
 package main
 
-import "github.com/renaynay/astria-hackathon/messenger"
+import "github.com/astriaorg/messenger-rollup/messenger"
 
 func main() {
 	println("hello, world!")

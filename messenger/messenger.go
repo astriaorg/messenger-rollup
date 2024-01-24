@@ -47,7 +47,36 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	w.Write(blockJson)
 }
 
-func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {}
+func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	sender, ok := vars["sender"]
+	if !ok {
+		fmt.Printf("error getting sender from request\n")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	message, ok := vars["message"]
+	if !ok {
+		fmt.Printf("error getting message from request\n")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	priorityStr, ok := vars["priority"]
+	if !ok {
+		fmt.Printf("error getting priority from request\n")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	priority, err := strconv.Atoi(priorityStr)
+	if err != nil {
+		fmt.Printf("error converting priority to int: %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	println("received tx: sender: %s, message: %s, priority: %d", sender, message, priority)
+}
 
 type App struct {
 	executionAddr   string
