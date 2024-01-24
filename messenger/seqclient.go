@@ -66,7 +66,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 
 	resp, err := sc.broadcastTxSync(signed)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return resp, nil

@@ -55,7 +55,13 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	a.sequencerClient.SendMessage(tx)
+	resp, err := a.sequencerClient.SendMessage(tx)
+	if err != nil {
+		fmt.Printf("error sending message: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	println(resp.Log)
 }
 
 type App struct {
