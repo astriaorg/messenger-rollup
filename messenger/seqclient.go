@@ -13,6 +13,7 @@ import (
 type SequencerClient struct {
 	c      *client.Client
 	signer *client.Signer
+	nonce  uint32
 }
 
 func NewSequencerClient(sequencerAddr string) *SequencerClient {
@@ -44,7 +45,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 	}
 
 	unsigned := &astriaPb.UnsignedTransaction{
-		Nonce: 1,
+		Nonce: sc.nonce,
 		Actions: []*astriaPb.Action{
 			{
 				Value: &astriaPb.Action_SequenceAction{
@@ -67,6 +68,30 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 	resp, err := sc.broadcastTxSync(signed)
 	if err != nil {
 		return nil, err
+	}
+	if resp.Code == 4 {
+		newNonce, err := sc.c.GetNonce(context.Background(), sc.signer.Address())
+		if err != nil {
+			return nil, err
+		}
+		sc.nonce = newNonce
+		unsigned = &astriaPb.UnsignedTransaction{
+			Nonce:   sc.nonce,
+			Actions: unsigned.Actions,
+		}
+		signed, err = sc.signer.SignTransaction(unsigned)
+		if err != nil {
+			return nil, err
+		}
+		resp, err = sc.broadcastTxSync(signed)
+		if err != nil {
+			return nil, err
+		}
+		if resp.Code != 0 {
+			return nil, fmt.Errorf("unexpected error code: %d", resp.Code)
+		}
+	} else if resp.Code != 0 {
+		return nil, fmt.Errorf("unexpected error code: %d", resp.Code)
 	}
 
 	return resp, nil
