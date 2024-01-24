@@ -1,0 +1,10 @@
+@font-face {
+  font-family: 'KongText';
+  src: url('/kongtext.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'KongText', sans-serif;
+}
