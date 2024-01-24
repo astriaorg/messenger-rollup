@@ -30,7 +30,7 @@ jobs:
 
       - name: Set Git user
         run: |
-          git config --global user.name "Josh Stein"
+          git config --global user.name "jcstein"
           git config --global user.email "mail@jcstein.dev"
 
       - name: Deploy
