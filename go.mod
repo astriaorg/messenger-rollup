@@ -5,6 +5,7 @@ go 1.21.3
 require (
 	buf.build/gen/go/astria/astria/grpc/go v1.3.0-20240122214046-82aeeedbc45e.2
 	buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240122214046-82aeeedbc45e.1
+	github.com/gorilla/mux v1.8.1
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
 )

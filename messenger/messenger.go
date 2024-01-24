@@ -3,85 +3,113 @@ package messenger
 import (
 	"encoding/json"
 	"errors"
-	"time"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"strconv"
 
-	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/execution/v1alpha2"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	astriaGrpc "buf.build/gen/go/astria/astria/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
+	"github.com/gorilla/mux"
+	"google.golang.org/grpc"
 )
 
-type Transaction struct {
-	Sender   string `json:"sender"`
-	Message  string `json:"message"`
-	Priority uint32 `json:"priority"`
+func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	heightStr, ok := vars["height"]
+	if !ok {
+		fmt.Printf("error getting height from request\n")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	height, err := strconv.Atoi(heightStr)
+	if err != nil {
+		fmt.Printf("error converting height to int: %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("getting block %d\n", height)
+	block, err := a.messenger.GetSingleBlock(uint32(height))
+	if err != nil {
+		fmt.Printf("error getting block: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	blockJson, err := json.Marshal(block)
+	if err != nil {
+		fmt.Printf("error marshalling block: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(blockJson)
 }
 
-type Block struct {
-	parent_hash []byte
-	hash        []byte
-	height      uint32
-	timestamp   time.Time
-	txs         []Transaction
+func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {}
+
+type App struct {
+	executionAddr   string
+	sequencerAddr   string
+	sequencerClient http.Client
+	restRouter      *mux.Router
+	restAddr        string
+	messenger       *Messenger
 }
 
-func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
-	return Block{
-		parent_hash: []byte{0x0},
-		hash:        []byte{0x0},
-		height:      height,
-		txs:         txs,
-		timestamp:   timestamp,
+func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
+	m := NewMessenger()
+
+	router := mux.NewRouter()
+	return &App{
+		executionAddr:   executionAddr,
+		sequencerAddr:   sequencerAddr,
+		sequencerClient: http.Client{},
+		restRouter:      router,
+		restAddr:        restAddr,
+		messenger:       m,
 	}
 }
 
-func (b *Block) ToPb() (*astriaPb.Block, error) {
-	txs := [][]byte{}
-	for _, tx := range b.txs {
-		if bytes, err := json.Marshal(tx); err != nil {
-			txs = append(txs, bytes)
-		} else {
-			return nil, errors.New("failed to marshal transaction into bytes")
+func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
+	return NewExecutionServiceServerV1Alpha2(a.messenger)
+}
+
+func (a *App) setupRestRoutes() {
+	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
+	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
+}
+
+func (a *App) makeRestServer() *http.Server {
+	return &http.Server{
+		Addr:    a.restAddr,
+		Handler: a.restRouter,
+	}
+}
+
+func (a *App) Run() {
+	// run execution api
+	go func() {
+		server := a.makeExecutionServer()
+		lis, err := net.Listen("tcp", a.executionAddr)
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
 		}
+		grpcServer := grpc.NewServer()
+		astriaGrpc.RegisterExecutionServiceServer(grpcServer, server.ExecutionServiceServer)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	// run rest api server
+	server := a.makeRestServer()
+	err := server.ListenAndServe()
+	if errors.Is(err, http.ErrServerClosed) {
+		fmt.Printf("rest api server closed\n")
+	} else if err != nil {
+		fmt.Printf("error listening for rest api server: %s\n", err)
 	}
 
-	return &astriaPb.Block{
-		Number:          b.height,
-		Hash:            b.hash,
-		ParentBlockHash: b.parent_hash,
-		Timestamp:       timestamppb.New(b.timestamp),
-	}, nil
-}
-
-func GenesisBlock() Block {
-	return Block{
-		parent_hash: []byte{0x0},
-		hash:        []byte{0x0},
-		height:      0,
-		timestamp:   time.Now(),
-		txs:         []Transaction{},
-	}
-}
-
-type Messenger struct {
-	Blocks []Block
-}
-
-func NewMessenger() *Messenger {
-	return &Messenger{
-		Blocks: []Block{GenesisBlock()},
-	}
-}
-
-func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
-	if height >= uint32(len(m.Blocks)) {
-		return nil, errors.New("block not found")
-	}
-	return &m.Blocks[height], nil
-}
-
-func (m *Messenger) GetCurrentBlock() (*Block, error) {
-	return m.GetSingleBlock(uint32(len(m.Blocks) - 1))
-}
-
-func (m *Messenger) Height() uint32 {
-	return uint32(len(m.Blocks))
 }
