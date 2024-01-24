@@ -12,7 +12,7 @@ import (
 )
 
 type ExecutionServiceServerV1Alpha2 struct {
-	astriaGrpc.ExecutionServiceServer
+	astriaGrpc.UnimplementedExecutionServiceServer
 	m *Messenger
 }
 
