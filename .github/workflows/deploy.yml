@@ -28,6 +28,11 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Set Git user
+        run: |
+          git config --global user.name "Josh Stein"
+          git config --global user.email "mail@jcstein.dev"
+
       - name: Deploy
         run: |
           cd frontend
