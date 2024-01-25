@@ -10,12 +10,14 @@ import (
 	tendermintPb "github.com/cometbft/cometbft/rpc/core/types"
 )
 
+// SequencerClient is a client for interacting with the sequencer.
 type SequencerClient struct {
 	c      *client.Client
 	signer *client.Signer
 	nonce  uint32
 }
 
+// NewSequencerClient creates a new SequencerClient.
 func NewSequencerClient(sequencerAddr string) *SequencerClient {
 	signer, err := client.GenerateSigner()
 	if err != nil {
@@ -34,10 +36,12 @@ func NewSequencerClient(sequencerAddr string) *SequencerClient {
 	}
 }
 
+// broadcastTxSync broadcasts a transaction synchronously.
 func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*tendermintPb.ResultBroadcastTx, error) {
 	return sc.c.BroadcastTxSync(context.Background(), tx)
 }
 
+// SendMessage sends a message as a transaction.
 func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroadcastTx, error) {
 	data, err := json.Marshal(tx)
 	if err != nil {

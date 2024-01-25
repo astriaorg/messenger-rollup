@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// getBlock handles GET requests to retrieve a block by its height.
 func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	heightStr, ok := vars["height"]
@@ -47,6 +48,7 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	w.Write(blockJson)
 }
 
+// postMessage handles POST requests to send a message.
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	var tx Transaction
 	err := json.NewDecoder(r.Body).Decode(&tx)
@@ -64,6 +66,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	println(resp.Log)
 }
 
+// App is the main application struct, containing all the necessary components.
 type App struct {
 	executionAddr   string
 	sequencerAddr   string
@@ -73,6 +76,7 @@ type App struct {
 	messenger       *Messenger
 }
 
+// NewApp creates a new App.
 func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
 	m := NewMessenger()
 
@@ -87,15 +91,18 @@ func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
 	}
 }
 
+// makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
 	return NewExecutionServiceServerV1Alpha2(a.messenger)
 }
 
+// setupRestRoutes sets up the routes for the REST API.
 func (a *App) setupRestRoutes() {
 	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
 	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
 }
 
+// makeRestServer creates a new HTTP server for the REST API.
 func (a *App) makeRestServer() *http.Server {
 	return &http.Server{
 		Addr:    a.restAddr,
@@ -103,6 +110,7 @@ func (a *App) makeRestServer() *http.Server {
 	}
 }
 
+// Run starts the application, including the execution API and the REST API server.
 func (a *App) Run() {
 	// run execution api
 	go func() {

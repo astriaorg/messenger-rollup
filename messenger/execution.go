@@ -11,17 +11,20 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// ExecutionServiceServerV1Alpha2 is a server that implements the ExecutionServiceServer interface.
 type ExecutionServiceServerV1Alpha2 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
 	m *Messenger
 }
 
+// NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
 func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Alpha2 {
 	return &ExecutionServiceServerV1Alpha2{
 		m: m,
 	}
 }
 
+// getSingleBlock retrieves a single block by its height.
 func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaPb.Block, error) {
 	if height > s.m.Height() {
 		return nil, errors.New("block not found")
@@ -38,6 +41,7 @@ func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaP
 	}, nil
 }
 
+// GetBlock retrieves a block by its identifier.
 func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astriaPb.GetBlockRequest) (*astriaPb.Block, error) {
 	switch req.Identifier.Identifier.(type) {
 	case *astriaPb.BlockIdentifier_BlockNumber:
@@ -51,6 +55,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astr
 	}
 }
 
+// BatchGetBlocks retrieves multiple blocks by their identifiers.
 func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req *astriaPb.BatchGetBlocksRequest) (*astriaPb.BatchGetBlocksResponse, error) {
 	res := &astriaPb.BatchGetBlocksResponse{
 		Blocks: []*astriaPb.Block{},
@@ -73,6 +78,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 	return res, nil
 }
 
+// ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
 	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].hash[:]) {
 		return nil, errors.New("invalid prev block hash")
@@ -93,6 +99,7 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 	return blockPb, nil
 }
 
+// GetCommitmentState retrieves the current commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
 	soft, err := s.m.Blocks[len(s.m.Blocks)-1].ToPb()
 	if err != nil {
@@ -109,12 +116,14 @@ func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context,
 	return res, nil
 }
 
+// UpdateCommitmentState updates the commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Context, req *astriaPb.UpdateCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
 	println("UpdateCommitmentState called", "request", req)
 	println("UpdateCommitmentState completed", "request", req)
 	return req.CommitmentState, nil
 }
 
+// getBlockFromIdentifier retrieves a block by its identifier.
 func (s *ExecutionServiceServerV1Alpha2) getBlockFromIdentifier(identifier *astriaPb.BlockIdentifier) (*astriaPb.Block, error) {
 	println("getBlockFromIdentifier called", "identifier", identifier)
 

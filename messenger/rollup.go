@@ -9,12 +9,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// Transaction represents a transaction in the blockchain.
 type Transaction struct {
 	Sender   string `json:"sender"`
 	Message  string `json:"message"`
 	Priority uint32 `json:"priority"`
 }
 
+// Block represents a block in the blockchain.
 type Block struct {
 	parent_hash [32]byte
 	hash        [32]byte
@@ -23,6 +25,7 @@ type Block struct {
 	txs         []Transaction
 }
 
+// NewBlock creates a new block with the given height, transactions, and timestamp.
 func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
 	return Block{
 		parent_hash: [32]byte{0x0},
@@ -33,6 +36,7 @@ func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
 	}
 }
 
+// ToPb converts the block to a protobuf message.
 func (b *Block) ToPb() (*astriaPb.Block, error) {
 	txs := [][]byte{}
 	for _, tx := range b.txs {
@@ -51,6 +55,7 @@ func (b *Block) ToPb() (*astriaPb.Block, error) {
 	}, nil
 }
 
+// GenesisBlock creates the genesis block.
 func GenesisBlock() Block {
 	return Block{
 		parent_hash: [32]byte{0x00000000},
@@ -61,16 +66,19 @@ func GenesisBlock() Block {
 	}
 }
 
+// Messenger is a struct that manages the blocks in the blockchain.
 type Messenger struct {
 	Blocks []Block
 }
 
+// NewMessenger creates a new Messenger with a genesis block.
 func NewMessenger() *Messenger {
 	return &Messenger{
 		Blocks: []Block{GenesisBlock()},
 	}
 }
 
+// GetSingleBlock retrieves a block by its height.
 func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 	if height > uint32(len(m.Blocks)) {
 		return nil, errors.New("block not found")
@@ -78,10 +86,12 @@ func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 	return &m.Blocks[height], nil
 }
 
+// GetCurrentBlock retrieves the current block.
 func (m *Messenger) GetCurrentBlock() (*Block, error) {
 	return m.GetSingleBlock(uint32(len(m.Blocks) - 1))
 }
 
+// Height returns the height of the blockchain.
 func (m *Messenger) Height() uint32 {
 	return uint32(len(m.Blocks))
 }
