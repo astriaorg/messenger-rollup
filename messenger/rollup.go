@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/execution/v1alpha2"
+	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
