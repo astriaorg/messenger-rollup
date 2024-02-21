@@ -51,7 +51,7 @@ func NewBlock(parentHash []byte, height uint32, txs []Transaction, timestamp tim
 
 	return Block{
 		ParentHash: [32]byte(parentHash),
-		Hash:       *txHash,
+		Hash:       txHash,
 		Height:     height,
 		Txs:        txs,
 		Timestamp:  timestamp,
@@ -82,7 +82,7 @@ func GenesisBlock() Block {
 
 	return Block{
 		ParentHash: [32]byte{0x00000000},
-		Hash:       *helloHash,
+		Hash:       helloHash,
 		Height:     0,
 		Timestamp:  time.Now(),
 		Txs: []Transaction{
