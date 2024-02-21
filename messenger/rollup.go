@@ -20,11 +20,11 @@ type Transaction struct {
 	Priority uint32 `json:"priority"`
 }
 
-func HashTxs(txs []Transaction) (*[32]byte, error) {
+func HashTxs(txs []Transaction) ([32]byte, error) {
 	txBytes := [][]byte{}
 	for _, tx := range txs {
 		if bytes, err := json.Marshal(tx); err != nil {
-			return nil, err
+			return [32]byte{}, err
 		} else {
 			txBytes = append(txBytes, bytes)
 		}
@@ -32,7 +32,7 @@ func HashTxs(txs []Transaction) (*[32]byte, error) {
 
 	hash := sha256.Sum256(bytes.Join(txBytes, []byte{}))
 
-	return &hash, nil
+	return hash, nil
 }
 
 type Block struct {
