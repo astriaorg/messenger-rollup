@@ -3,11 +3,12 @@ package messenger
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 
-	astriaGrpc "buf.build/gen/go/astria/astria/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
-	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/execution/v1alpha2"
+	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
+	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -153,4 +154,18 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 
 	log.Debug("UpdateCommitmentState completed", "request", req)
 	return req.CommitmentState, nil
+}
+
+func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
+	println("GetGenesisInfo called", "request", req)
+	// FIXME - use envars/config
+	rollupId := sha256.Sum256([]byte("messenger-rollup"))
+	res := &astriaPb.GenesisInfo{
+		RollupId:                    rollupId[:],
+		SequencerGenesisBlockHeight: 1,
+		CelestiaBaseBlockHeight:     0,
+		CelestiaBlockVariance:       10,
+	}
+	println("GetGenesisInfo completed", "request", req, "response", res)
+	return res, nil
 }
