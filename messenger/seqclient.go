@@ -8,6 +8,8 @@ import (
 	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/sequencer/v1alpha1"
 	client "github.com/astriaorg/go-sequencer-client/client"
 	tendermintPb "github.com/cometbft/cometbft/rpc/core/types"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // SequencerClient is a client for interacting with the sequencer.
@@ -72,7 +74,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 	}
 	println("signed tx: ", signed)
 
-	fmt.Printf("submitting tx to sequencer. sender: %s, message: %s\n", tx.Sender, tx.Message)
+	log.Debugf("submitting tx to sequencer. sender: %s, message: %s\n", tx.Sender, tx.Message)
 
 	resp, err := sc.broadcastTxSync(signed)
 	if err != nil {

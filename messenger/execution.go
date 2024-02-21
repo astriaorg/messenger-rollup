@@ -32,12 +32,12 @@ func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaP
 	}
 
 	block := s.m.Blocks[height]
-	timestamp := timestamppb.New(block.timestamp)
+	timestamp := timestamppb.New(block.Timestamp)
 
 	return &astriaPb.Block{
 		Number:          height,
-		Hash:            block.hash[:],
-		ParentBlockHash: s.m.Blocks[height-1].hash[:],
+		Hash:            block.Hash[:],
+		ParentBlockHash: s.m.Blocks[height-1].Hash[:],
 		Timestamp:       timestamp,
 	}, nil
 }
@@ -82,16 +82,18 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
-	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].hash[:]) {
+	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].Hash[:]) {
 		return nil, errors.New("invalid prev block hash")
 	}
 	txs := []Transaction{}
 	for _, txBytes := range req.Transactions {
 		tx := &Transaction{}
-		json.Unmarshal(txBytes, *tx)
+		if err := json.Unmarshal(txBytes, *tx); err != nil {
+			return nil, errors.New("failed to unmarshal transaction")
+		}
 		txs = append(txs, *tx)
 	}
-	block := NewBlock(uint32(len(s.m.Blocks)), txs, req.Timestamp.AsTime())
+	block := NewBlock(req.PrevBlockHash, uint32(len(s.m.Blocks)), txs, req.Timestamp.AsTime())
 	s.m.Blocks = append(s.m.Blocks, block)
 
 	blockPb, err := block.ToPb()

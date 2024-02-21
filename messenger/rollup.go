@@ -1,6 +1,8 @@
 package messenger
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"time"
@@ -16,54 +18,61 @@ type Transaction struct {
 	Priority uint32 `json:"priority"`
 }
 
-// Block represents a block in the blockchain.
-type Block struct {
-	parent_hash [32]byte
-	hash        [32]byte
-	height      uint32
-	timestamp   time.Time
-	txs         []Transaction
-}
-
-// NewBlock creates a new block with the given height, transactions, and timestamp.
-func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
-	return Block{
-		parent_hash: [32]byte{0x0},
-		hash:        [32]byte{0x0},
-		height:      height,
-		txs:         txs,
-		timestamp:   timestamp,
-	}
-}
-
-// ToPb converts the block to a protobuf message.
-func (b *Block) ToPb() (*astriaPb.Block, error) {
-	println("converting block to protobuff")
-	txs := [][]byte{}
-	for _, tx := range b.txs {
+func HashTxs(txs []Transaction) (*[32]byte, error) {
+	txBytes := [][]byte{}
+	for _, tx := range txs {
 		if bytes, err := json.Marshal(tx); err != nil {
-			txs = append(txs, bytes)
+			txBytes = append(txBytes, bytes)
 		} else {
 			return nil, errors.New("failed to marshal transaction into bytes")
 		}
 	}
 
+	hash := sha256.Sum256(bytes.Join(txBytes, []byte{}))
+
+	return &hash, nil
+}
+
+type Block struct {
+	ParentHash [32]byte
+	Hash       [32]byte
+	Height     uint32
+	Timestamp  time.Time
+	Txs        []Transaction
+}
+
+func NewBlock(parentHash []byte, height uint32, txs []Transaction, timestamp time.Time) Block {
+	txHash, err := HashTxs(txs)
+	if err != nil {
+		panic(err)
+	}
+
+	return Block{
+		ParentHash: [32]byte(parentHash),
+		Hash:       *txHash,
+		Height:     height,
+		Txs:        txs,
+		Timestamp:  timestamp,
+	}
+}
+
+func (b *Block) ToPb() (*astriaPb.Block, error) {
 	return &astriaPb.Block{
-		Number:          b.height,
-		Hash:            b.hash[:],
-		ParentBlockHash: b.parent_hash[:],
-		Timestamp:       timestamppb.New(b.timestamp),
+		Number:          b.Height,
+		Hash:            b.Hash[:],
+		ParentBlockHash: b.ParentHash[:],
+		Timestamp:       timestamppb.New(b.Timestamp),
 	}, nil
 }
 
 // GenesisBlock creates the genesis block.
 func GenesisBlock() Block {
 	return Block{
-		parent_hash: [32]byte{0x00000000},
-		hash:        [32]byte{0x00000000},
-		height:      0,
-		timestamp:   time.Now(),
-		txs:         []Transaction{},
+		ParentHash: [32]byte{0x00000000},
+		Hash:       [32]byte{0x00000000},
+		Height:     0,
+		Timestamp:  time.Now(),
+		Txs:        []Transaction{},
 	}
 }
 
@@ -88,9 +97,7 @@ func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 	return &m.Blocks[height], nil
 }
 
-// GetCurrentBlock retrieves the current block.
-func (m *Messenger) GetCurrentBlock() (*Block, error) {
-	println("getting current block at height", len(m.Blocks)-1)
+func (m *Messenger) GetLatestBlock() (*Block, error) {
 	return m.GetSingleBlock(uint32(len(m.Blocks) - 1))
 }
 

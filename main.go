@@ -1,13 +1,25 @@
 package main
 
-import "github.com/astriaorg/messenger-rollup/messenger"
+import (
+	"context"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/astriaorg/messenger-rollup/messenger"
+	"github.com/sethvargo/go-envconfig"
+)
 
 func main() {
-	println("hello, world! i'm a messenger rollup!")
-
 	// load env vars
+	var cfg messenger.Config
+	if err := envconfig.Process(context.Background(), &cfg); err != nil {
+		log.Fatal(err)
+	}
+	log.Debugf("Read config from env: %+v\n", cfg)
 
-	// executionPort, sequencerPort, restApiPort
-	app := messenger.NewApp(":50051", "localhost:26658", ":8080")
+	// init from cfg
+	app := messenger.NewApp(cfg)
+
+	// run messenger
 	app.Run()
 }
