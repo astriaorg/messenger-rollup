@@ -151,7 +151,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req
 		RollupId:                    rollupId[:],
 		SequencerGenesisBlockHeight: 1,
 		CelestiaBaseBlockHeight:     0,
-		CelestiaBlockVariance:       10,
+		CelestiaBlockVariance:       0,
 	}
 	log.Println("GetGenesisInfo completed", "request", req, "response", res)
 	return res, nil
