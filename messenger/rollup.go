@@ -38,6 +38,7 @@ func NewBlock(height uint32, txs []Transaction, timestamp time.Time) Block {
 
 // ToPb converts the block to a protobuf message.
 func (b *Block) ToPb() (*astriaPb.Block, error) {
+	println("converting block to protobuff")
 	txs := [][]byte{}
 	for _, tx := range b.txs {
 		if bytes, err := json.Marshal(tx); err != nil {
@@ -80,6 +81,7 @@ func NewMessenger() *Messenger {
 
 // GetSingleBlock retrieves a block by its height.
 func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
+	println("getting block at height", height)
 	if height > uint32(len(m.Blocks)) {
 		return nil, errors.New("block not found")
 	}
@@ -88,10 +90,12 @@ func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 
 // GetCurrentBlock retrieves the current block.
 func (m *Messenger) GetCurrentBlock() (*Block, error) {
+	println("getting current block at height", len(m.Blocks)-1)
 	return m.GetSingleBlock(uint32(len(m.Blocks) - 1))
 }
 
 // Height returns the height of the blockchain.
 func (m *Messenger) Height() uint32 {
+	println("getting height of blockchain", len(m.Blocks))
 	return uint32(len(m.Blocks))
 }

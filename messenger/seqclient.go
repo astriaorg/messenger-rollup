@@ -19,6 +19,7 @@ type SequencerClient struct {
 
 // NewSequencerClient creates a new SequencerClient.
 func NewSequencerClient(sequencerAddr string) *SequencerClient {
+	println("creating new sequencer client")
 	signer, err := client.GenerateSigner()
 	if err != nil {
 		panic(err)
@@ -38,11 +39,13 @@ func NewSequencerClient(sequencerAddr string) *SequencerClient {
 
 // broadcastTxSync broadcasts a transaction synchronously.
 func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*tendermintPb.ResultBroadcastTx, error) {
+	println("broadcasting tx")
 	return sc.c.BroadcastTxSync(context.Background(), tx)
 }
 
 // SendMessage sends a message as a transaction.
 func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroadcastTx, error) {
+	println("sending message")
 	data, err := json.Marshal(tx)
 	if err != nil {
 		return nil, err
@@ -61,11 +64,13 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 			},
 		},
 	}
+	println("unsigned tx: ", unsigned)
 
 	signed, err := sc.signer.SignTransaction(unsigned)
 	if err != nil {
 		panic(err)
 	}
+	println("signed tx: ", signed)
 
 	fmt.Printf("submitting tx to sequencer. sender: %s, message: %s\n", tx.Sender, tx.Message)
 

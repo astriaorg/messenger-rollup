@@ -16,6 +16,7 @@ import (
 
 // getBlock handles GET requests to retrieve a block by its height.
 func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
+	println("getting block")
 	vars := mux.Vars(r)
 	heightStr, ok := vars["height"]
 	if !ok {
@@ -81,6 +82,8 @@ func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
 	m := NewMessenger()
 
 	router := mux.NewRouter()
+
+	println("new app created")
 	return &App{
 		executionAddr:   executionAddr,
 		sequencerAddr:   sequencerAddr,
@@ -93,17 +96,20 @@ func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
 
 // makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
+	println("creating execution service server")
 	return NewExecutionServiceServerV1Alpha2(a.messenger)
 }
 
 // setupRestRoutes sets up the routes for the REST API.
 func (a *App) setupRestRoutes() {
+	println("setting up rest routes")
 	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
 	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
 }
 
 // makeRestServer creates a new HTTP server for the REST API.
 func (a *App) makeRestServer() *http.Server {
+	println("creating rest server")
 	return &http.Server{
 		Addr:    a.restAddr,
 		Handler: a.restRouter,
@@ -114,6 +120,7 @@ func (a *App) makeRestServer() *http.Server {
 func (a *App) Run() {
 	// run execution api
 	go func() {
+		println("creating execution api server")
 		server := a.makeExecutionServer()
 		lis, err := net.Listen("tcp", a.executionAddr)
 		if err != nil {
@@ -126,6 +133,7 @@ func (a *App) Run() {
 		}
 	}()
 
+	println("creating rest api server")
 	// run rest api server
 	a.setupRestRoutes()
 	server := a.makeRestServer()
@@ -135,5 +143,4 @@ func (a *App) Run() {
 	} else if err != nil {
 		fmt.Printf("error listening for rest api server: %s\n", err)
 	}
-
 }

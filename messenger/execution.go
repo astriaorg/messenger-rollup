@@ -26,6 +26,7 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Al
 
 // getSingleBlock retrieves a single block by its height.
 func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaPb.Block, error) {
+	println("getSingleBlock called", "height", height)
 	if height > s.m.Height() {
 		return nil, errors.New("block not found")
 	}
@@ -43,6 +44,7 @@ func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaP
 
 // GetBlock retrieves a block by its identifier.
 func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astriaPb.GetBlockRequest) (*astriaPb.Block, error) {
+	println("GetBlock called", "request", req)
 	switch req.Identifier.Identifier.(type) {
 	case *astriaPb.BlockIdentifier_BlockNumber:
 		block, err := s.getSingleBlock(uint32(req.Identifier.GetBlockNumber()))
