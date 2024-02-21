@@ -24,9 +24,9 @@ func HashTxs(txs []Transaction) (*[32]byte, error) {
 	txBytes := [][]byte{}
 	for _, tx := range txs {
 		if bytes, err := json.Marshal(tx); err != nil {
-			txBytes = append(txBytes, bytes)
+			return nil, err
 		} else {
-			return nil, errors.New("failed to marshal transaction into bytes")
+			txBytes = append(txBytes, bytes)
 		}
 	}
 
