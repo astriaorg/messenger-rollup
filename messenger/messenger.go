@@ -48,20 +48,17 @@ func NewApp(cfg Config) *App {
 
 // makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
-	println("creating execution service server")
 	return NewExecutionServiceServerV1Alpha2(a.messenger)
 }
 
 // setupRestRoutes sets up the routes for the REST API.
 func (a *App) setupRestRoutes() {
-	println("setting up rest routes")
 	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
 	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
 }
 
 // makeRestServer creates a new HTTP server for the REST API.
 func (a *App) makeRestServer() *http.Server {
-	println("creating rest server")
 	return &http.Server{
 		Addr:    a.restAddr,
 		Handler: a.restRouter,
@@ -115,13 +112,12 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	println(resp.Log)
+	log.Debugf("postMessage response: %v\n", resp.Log)
 }
 
 func (a *App) Run() {
 	// run execution api
 	go func() {
-		println("creating execution api server")
 		server := a.makeExecutionServer()
 		lis, err := net.Listen("tcp", a.executionRPC)
 		if err != nil {
@@ -134,7 +130,6 @@ func (a *App) Run() {
 		}
 	}()
 
-	println("creating rest api server")
 	// run rest api server
 	a.setupRestRoutes()
 	server := a.makeRestServer()

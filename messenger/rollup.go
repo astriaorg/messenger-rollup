@@ -9,6 +9,8 @@ import (
 
 	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/execution/v1alpha2"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Transaction represents a transaction in the blockchain.
@@ -90,7 +92,7 @@ func NewMessenger() *Messenger {
 
 // GetSingleBlock retrieves a block by its height.
 func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
-	println("getting block at height", height)
+	log.Debugf("getting block at height %d\n", height)
 	if height > uint32(len(m.Blocks)) {
 		return nil, errors.New("block not found")
 	}
@@ -103,6 +105,6 @@ func (m *Messenger) GetLatestBlock() (*Block, error) {
 
 // Height returns the height of the blockchain.
 func (m *Messenger) Height() uint32 {
-	println("getting height of blockchain", len(m.Blocks))
+	log.Debugf("getting height of blockchain: %d\n", len(m.Blocks))
 	return uint32(len(m.Blocks))
 }

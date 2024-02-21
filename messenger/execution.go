@@ -8,6 +8,7 @@ import (
 
 	astriaGrpc "buf.build/gen/go/astria/astria/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
 	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/execution/v1alpha2"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -26,7 +27,7 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Al
 
 // getSingleBlock retrieves a single block by its height.
 func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaPb.Block, error) {
-	println("getSingleBlock called", "height", height)
+	log.Debug("getSingleBlock called", "height", height)
 	if height > s.m.Height() {
 		return nil, errors.New("block not found")
 	}
@@ -44,7 +45,7 @@ func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaP
 
 // GetBlock retrieves a block by its identifier.
 func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astriaPb.GetBlockRequest) (*astriaPb.Block, error) {
-	println("GetBlock called", "request", req)
+	log.Debug("GetBlock called", "request", req)
 	switch req.Identifier.Identifier.(type) {
 	case *astriaPb.BlockIdentifier_BlockNumber:
 		block, err := s.getSingleBlock(uint32(req.Identifier.GetBlockNumber()))
@@ -122,20 +123,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context,
 
 // UpdateCommitmentState updates the commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Context, req *astriaPb.UpdateCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
-	println("UpdateCommitmentState called", "request", req)
-	println("UpdateCommitmentState completed", "request", req)
+	log.Debug("UpdateCommitmentState called", "request", req)
+	log.Debug("UpdateCommitmentState completed", "request", req)
 	return req.CommitmentState, nil
-}
-
-// getBlockFromIdentifier retrieves a block by its identifier.
-func (s *ExecutionServiceServerV1Alpha2) getBlockFromIdentifier(identifier *astriaPb.BlockIdentifier) (*astriaPb.Block, error) {
-	println("getBlockFromIdentifier called", "identifier", identifier)
-
-	res := &astriaPb.Block{
-		Number:          uint32(0),
-		Hash:            []byte{0x0},
-		ParentBlockHash: []byte{0x0},
-	}
-	println("getBlockFromIdentifier completed", "identifier", identifier, "response", res)
-	return res, nil
 }
