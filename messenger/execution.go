@@ -88,7 +88,7 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 	txs := []Transaction{}
 	for _, txBytes := range req.Transactions {
 		tx := &Transaction{}
-		if err := json.Unmarshal(txBytes, *tx); err != nil {
+		if err := json.Unmarshal(txBytes, tx); err != nil {
 			return nil, errors.New("failed to unmarshal transaction")
 		}
 		txs = append(txs, *tx)
