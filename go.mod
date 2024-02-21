@@ -3,6 +3,7 @@ module github.com/astriaorg/messenger-rollup
 go 1.21.3
 
 require (
+	buf.build/gen/go/astria/astria/protocolbuffers/go v1.31.0-20231130012811-2fd7e6d46ebd.2
 	buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240209225522-97e3bc68f856.2
 	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.28.1-20240209225522-97e3bc68f856.4
 	github.com/astriaorg/go-sequencer-client v0.0.0-20231201013457-0df599de8e74
@@ -13,7 +14,6 @@ require (
 )
 
 require (
-	buf.build/gen/go/astria/astria/protocolbuffers/go v1.31.0-20231130012811-2fd7e6d46ebd.2 // indirect
 	buf.build/gen/go/cosmos/cosmos-proto/protocolbuffers/go v1.32.0-20211202220400-1935555c206d.1 // indirect
 	buf.build/gen/go/cosmos/cosmos-sdk/protocolbuffers/go v1.32.0-20230719110346-aa25660f4ff7.1 // indirect
 	buf.build/gen/go/cosmos/gogo-proto/protocolbuffers/go v1.32.0-20230509103710-5e5b9fdd0180.1 // indirect

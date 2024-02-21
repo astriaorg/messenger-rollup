@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
+	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/sequencer/v1alpha1"
 	client "github.com/astriaorg/go-sequencer-client/client"
 	tendermintPb "github.com/cometbft/cometbft/rpc/core/types"
 )
