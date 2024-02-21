@@ -69,28 +69,45 @@ func (b *Block) ToPb() (*astriaPb.Block, error) {
 
 // GenesisBlock creates the genesis block.
 func GenesisBlock() Block {
+	helloTx := Transaction{
+		Sender:  "astria",
+		Message: "hello, world!",
+	}
+
+	helloHash, err := HashTxs([]Transaction{helloTx})
+	if err != nil {
+		log.Errorf("error hashing genesis tx: %s\n", err)
+		panic(err)
+	}
+
 	return Block{
 		ParentHash: [32]byte{0x00000000},
-		Hash:       [32]byte{0x00000000},
+		Hash:       *helloHash,
 		Height:     0,
 		Timestamp:  time.Now(),
-		Txs:        []Transaction{},
+		Txs: []Transaction{
+			helloTx,
+		},
 	}
 }
 
 // Messenger is a struct that manages the blocks in the blockchain.
 type Messenger struct {
 	Blocks []Block
+	soft   uint32
+	firm   uint32
 }
 
-// NewMessenger creates a new Messenger with a genesis block.
 func NewMessenger() *Messenger {
 	return &Messenger{
 		Blocks: []Block{GenesisBlock()},
+		soft:   0,
+		firm:   0,
 	}
 }
 
-// GetSingleBlock retrieves a block by its height.
+// GetSingleBlock retrieves a block by its height, failing if the requested
+// height is higher than the current height.
 func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 	log.Debugf("getting block at height %d\n", height)
 	if height > uint32(len(m.Blocks)) {
@@ -99,12 +116,18 @@ func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
 	return &m.Blocks[height], nil
 }
 
-func (m *Messenger) GetLatestBlock() (*Block, error) {
-	return m.GetSingleBlock(uint32(len(m.Blocks) - 1))
+func (m *Messenger) GetSoftBlock() *Block {
+	return &m.Blocks[m.soft]
 }
 
-// Height returns the height of the blockchain.
+func (m *Messenger) GetFirmBlock() *Block {
+	return &m.Blocks[m.firm]
+}
+
+func (m *Messenger) GetLatestBlock() *Block {
+	return &m.Blocks[len(m.Blocks)-1]
+}
+
 func (m *Messenger) Height() uint32 {
-	log.Debugf("getting height of blockchain: %d\n", len(m.Blocks))
 	return uint32(len(m.Blocks))
 }

@@ -72,7 +72,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 	if err != nil {
 		panic(err)
 	}
-	log.Debugf("signed tx: ", signed)
+	log.Debugf("signed tx: %v\n", signed)
 
 	log.Debugf("submitting tx to sequencer. sender: %s, message: %s\n", tx.Sender, tx.Message)
 

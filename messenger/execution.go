@@ -83,7 +83,8 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
-	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].Hash[:]) {
+	// check if the prev block hash matches the current latest block
+	if !bytes.Equal(req.PrevBlockHash, s.m.GetLatestBlock().Hash[:]) {
 		return nil, errors.New("invalid prev block hash")
 	}
 	txs := []Transaction{}
@@ -106,17 +107,18 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 
 // GetCommitmentState retrieves the current commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
-	soft, err := s.m.Blocks[len(s.m.Blocks)-1].ToPb()
+	soft, err := s.m.GetSoftBlock().ToPb()
 	if err != nil {
-		return nil, errors.New("failed to convert soft block to protobuf")
+		return nil, err
 	}
-	hard, err := s.m.Blocks[len(s.m.Blocks)-1].ToPb()
+	firm, err := s.m.GetFirmBlock().ToPb()
 	if err != nil {
-		return nil, errors.New("failed to convert hard block to protobuf")
+		return nil, err
 	}
+
 	res := &astriaPb.CommitmentState{
 		Soft: soft,
-		Firm: hard,
+		Firm: firm,
 	}
 	return res, nil
 }
@@ -124,6 +126,31 @@ func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context,
 // UpdateCommitmentState updates the commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Context, req *astriaPb.UpdateCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
 	log.Debug("UpdateCommitmentState called", "request", req)
+	softHeight := req.CommitmentState.Soft.Number
+	firmHeight := req.CommitmentState.Firm.Number
+
+	// get the actual soft and firm blocks
+	firmBlock, err := s.m.GetSingleBlock(firmHeight)
+	if err != nil {
+		return nil, err
+	}
+	softBlock, err := s.m.GetSingleBlock(softHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	// compare actual blocks to commit state
+	if !bytes.Equal(softBlock.Hash[:], req.CommitmentState.Soft.Hash) {
+		return nil, errors.New("soft block hash mismatch")
+	}
+	if !bytes.Equal(firmBlock.Hash[:], req.CommitmentState.Firm.Hash) {
+		return nil, errors.New("firm block hash mismatch")
+	}
+
+	// update the commitment state
+	s.m.soft = softHeight
+	s.m.firm = firmHeight
+
 	log.Debug("UpdateCommitmentState completed", "request", req)
 	return req.CommitmentState, nil
 }
