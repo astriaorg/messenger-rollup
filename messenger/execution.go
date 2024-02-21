@@ -3,6 +3,7 @@ package messenger
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 
@@ -135,5 +136,19 @@ func (s *ExecutionServiceServerV1Alpha2) getBlockFromIdentifier(identifier *astr
 		ParentBlockHash: []byte{0x0},
 	}
 	println("getBlockFromIdentifier completed", "identifier", identifier, "response", res)
+	return res, nil
+}
+
+func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
+	println("GetGenesisInfo called", "request", req)
+	// FIXME - use envars/config
+	rollupId := sha256.Sum256([]byte("messenger-rollup"))
+	res := &astriaPb.GenesisInfo{
+		RollupId:                    rollupId[:],
+		SequencerGenesisBlockHeight: 1,
+		CelestiaBaseBlockHeight:     0,
+		CelestiaBlockVariance:       10,
+	}
+	println("GetGenesisInfo completed", "request", req, "response", res)
 	return res, nil
 }
