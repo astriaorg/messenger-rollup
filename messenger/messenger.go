@@ -3,93 +3,45 @@ package messenger
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 
 	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 )
 
-// getBlock handles GET requests to retrieve a block by its height.
-func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
-	println("getting block")
-	vars := mux.Vars(r)
-	heightStr, ok := vars["height"]
-	if !ok {
-		fmt.Printf("error getting height from request\n")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	height, err := strconv.Atoi(heightStr)
-	if err != nil {
-		fmt.Printf("error converting height to int: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	fmt.Printf("getting block %d\n", height)
-	block, err := a.messenger.GetSingleBlock(uint32(height))
-	if err != nil {
-		fmt.Printf("error getting block: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	blockJson, err := json.Marshal(block)
-	if err != nil {
-		fmt.Printf("error marshalling block: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(blockJson)
-}
-
-// postMessage handles POST requests to send a message.
-func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
-	var tx Transaction
-	err := json.NewDecoder(r.Body).Decode(&tx)
-	if err != nil {
-		fmt.Printf("error decoding transaction: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	resp, err := a.sequencerClient.SendMessage(tx)
-	if err != nil {
-		fmt.Printf("error sending message: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	println(resp.Log)
+type Config struct {
+	SequencerRPC string `env:"SEQUENCER_RPC, default=localhost:26658"`
+	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
+	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
 }
 
 // App is the main application struct, containing all the necessary components.
 type App struct {
-	executionAddr   string
-	sequencerAddr   string
+	executionRPC    string
+	sequencerRPC    string
 	sequencerClient SequencerClient
 	restRouter      *mux.Router
 	restAddr        string
 	messenger       *Messenger
 }
 
-// NewApp creates a new App.
-func NewApp(executionAddr string, sequencerAddr string, restAddr string) *App {
-	m := NewMessenger()
+func NewApp(cfg Config) *App {
+	log.Debugf("creating new messenger with config: %v", cfg)
 
+	m := NewMessenger()
 	router := mux.NewRouter()
 
-	println("new app created")
 	return &App{
-		executionAddr:   executionAddr,
-		sequencerAddr:   sequencerAddr,
-		sequencerClient: *NewSequencerClient(sequencerAddr),
+		executionRPC:    cfg.ConductorRPC,
+		sequencerRPC:    cfg.SequencerRPC,
+		sequencerClient: *NewSequencerClient(cfg.SequencerRPC),
 		restRouter:      router,
-		restAddr:        restAddr,
+		restAddr:        cfg.RESTApiPort,
 		messenger:       m,
 	}
 }
@@ -116,13 +68,62 @@ func (a *App) makeRestServer() *http.Server {
 	}
 }
 
-// Run starts the application, including the execution API and the REST API server.
+func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	heightStr, ok := vars["height"]
+	if !ok {
+		log.Errorf("error getting height from request\n")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	height, err := strconv.Atoi(heightStr)
+	if err != nil {
+		log.Errorf("error converting height to int: %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	log.Debugf("getting block %d\n", height)
+	block, err := a.messenger.GetSingleBlock(uint32(height))
+	if err != nil {
+		log.Errorf("error getting block: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	blockJson, err := json.Marshal(block)
+	if err != nil {
+		log.Errorf("error marshalling block: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(blockJson)
+}
+
+func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
+	var tx Transaction
+	err := json.NewDecoder(r.Body).Decode(&tx)
+	if err != nil {
+		log.Errorf("error decoding transaction: %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	resp, err := a.sequencerClient.SendMessage(tx)
+	if err != nil {
+		log.Errorf("error sending message: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	println(resp.Log)
+}
+
 func (a *App) Run() {
 	// run execution api
 	go func() {
 		println("creating execution api server")
 		server := a.makeExecutionServer()
-		lis, err := net.Listen("tcp", a.executionAddr)
+		lis, err := net.Listen("tcp", a.executionRPC)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -139,8 +140,8 @@ func (a *App) Run() {
 	server := a.makeRestServer()
 	err := server.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("rest api server closed\n")
+		log.Errorf("rest api server closed\n")
 	} else if err != nil {
-		fmt.Printf("error listening for rest api server: %s\n", err)
+		log.Errorf("error listening for rest api server: %s\n", err)
 	}
 }

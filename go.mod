@@ -9,6 +9,8 @@ require (
 	github.com/astriaorg/go-sequencer-client v0.0.0-20231201013457-0df599de8e74
 	github.com/cometbft/cometbft v0.37.0
 	github.com/gorilla/mux v1.8.1
+	github.com/sethvargo/go-envconfig v1.0.0
+	github.com/sirupsen/logrus v1.9.0
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
 )
