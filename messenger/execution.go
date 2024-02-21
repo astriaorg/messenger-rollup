@@ -7,9 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 
+	log "github.com/sirupsen/logrus"
+
 	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
 	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -157,15 +158,15 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 }
 
 func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
-	println("GetGenesisInfo called", "request", req)
+	log.Debug("GetGenesisInfo called", "request", req)
 	// FIXME - use envars/config
 	rollupId := sha256.Sum256([]byte("messenger-rollup"))
 	res := &astriaPb.GenesisInfo{
 		RollupId:                    rollupId[:],
 		SequencerGenesisBlockHeight: 1,
 		CelestiaBaseBlockHeight:     0,
-		CelestiaBlockVariance:       10,
+		CelestiaBlockVariance:       0,
 	}
-	println("GetGenesisInfo completed", "request", req, "response", res)
+	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
 	return res, nil
 }
