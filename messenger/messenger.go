@@ -2,7 +2,9 @@ package messenger
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net"
@@ -24,6 +26,7 @@ type Config struct {
 	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
 	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
 	RollupID     string `env:"ROLLUP_ID, default=messenger-rollup"`
+	SeqPrivate   string `env:"SEQUENCER_PRIVATE, default="`
 }
 
 // App is the main application struct, containing all the necessary components.
@@ -46,10 +49,17 @@ func NewApp(cfg Config) *App {
 
 	rollupID := sha256.Sum256([]byte(cfg.RollupName))
 
+	// sequencer private key
+	privateKeyBytes, err := hex.DecodeString(cfg.SeqPrivate)
+	if err != nil {
+		panic(err)
+	}
+	private := ed25519.NewKeyFromSeed(privateKeyBytes)
+
 	return &App{
 		executionRPC:    cfg.ConductorRPC,
 		sequencerRPC:    cfg.SequencerRPC,
-		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupID[:]),
+		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupID[:], private),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
 		messenger:       m,
