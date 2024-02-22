@@ -2,8 +2,9 @@ buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240215175137-9570e0c
 buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240215175137-9570e0c3082f.1/go.mod h1:HTIae3hIWhV69v7f8BJQzr2tP6yd0/gxwLrMiG306RY=
 buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240209225522-97e3bc68f856.2 h1:mK0jVG2+QlJrPKsgL46KKh2ZqHc8lyexQP3TUcOvvNU=
 buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240209225522-97e3bc68f856.2/go.mod h1:soA8k5qokjmp9DmV6jdcWndlVdSYjfa8KJZgsJrvixc=
-buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.28.1-20240209225522-97e3bc68f856.4 h1:TCt613d1YZb74Q2rpu9sn+OHXdUXkAr11u93NfnnyXg=
 buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.28.1-20240209225522-97e3bc68f856.4/go.mod h1:5wxRDkWimPnuhDUA4pFBaHMtrViNJAHguLU1Wq8T6x8=
+buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.32.0-20240209225522-97e3bc68f856.1 h1:6iyjwuNE2uuRikxiDVr56RvDJ+OE3g32v1V1zk5yIjI=
+buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.32.0-20240209225522-97e3bc68f856.1/go.mod h1:m409hJcO0kExqrFoQS8fQ7yXHuuM8JRTEYB+09WWVy0=
 buf.build/gen/go/cosmos/cosmos-proto/protocolbuffers/go v1.32.0-20211202220400-1935555c206d.1/go.mod h1:GpU2rx3tDDSvCER8/rvvgu6s6LeMU73TKjfBZ89OZKg=
 buf.build/gen/go/cosmos/cosmos-sdk/protocolbuffers/go v1.32.0-20230522115704-e7a85cef453e.1/go.mod h1:J8VpbpzO6pccEOWdLbYylDP8lRPifk2EA8tmJNkdZZo=
 buf.build/gen/go/cosmos/cosmos-sdk/protocolbuffers/go v1.32.0-20230719110346-aa25660f4ff7.1/go.mod h1:Tl9HTTTqDT4kfcsEwfEyUeFdJmbcgSOXL2q50rG5XBw=

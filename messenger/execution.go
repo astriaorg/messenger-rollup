@@ -17,15 +17,27 @@ import (
 type ExecutionServiceServerV1Alpha2 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
 	m        *Messenger
-	rollupID [32]byte
+	rollupID []byte
 }
 
 // NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
-func NewExecutionServiceServerV1Alpha2(rollupID [32]byte, m *Messenger) *ExecutionServiceServerV1Alpha2 {
+func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupID []byte) *ExecutionServiceServerV1Alpha2 {
 	return &ExecutionServiceServerV1Alpha2{
 		m:        m,
 		rollupID: rollupID,
 	}
+}
+
+func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
+	log.Debug("GetGenesisInfo called", "request", req)
+	res := &astriaPb.GenesisInfo{
+		rollupID:                    s.rollupID,
+		SequencerGenesisBlockHeight: uint32(1),
+		CelestiaBaseBlockHeight:     uint32(1),
+		CelestiaBlockVariance:       uint32(1),
+	}
+	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
+	return res, nil
 }
 
 // getSingleBlock retrieves a single block by its height.
@@ -86,6 +98,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
+	log.Debug("ExecuteBlock called", "request", req)
 	// check if the prev block hash matches the current latest block
 	if !bytes.Equal(req.PrevBlockHash, s.m.GetLatestBlock().Hash[:]) {
 		return nil, errors.New("invalid prev block hash")
@@ -156,17 +169,4 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 
 	log.Debug("UpdateCommitmentState completed", "request", req)
 	return req.CommitmentState, nil
-}
-
-func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
-	log.Debug("GetGenesisInfo called", "request", req)
-	res := &astriaPb.GenesisInfo{
-		RollupId:                    s.rollupID[:],
-		SequencerGenesisBlockHeight: 1,
-		// following fields ignored when running conductor in soft mode
-		CelestiaBaseBlockHeight: 0,
-		CelestiaBlockVariance:   0,
-	}
-	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
-	return res, nil
 }

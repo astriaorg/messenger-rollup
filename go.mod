@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240215175137-9570e0c3082f.1
 	buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240209225522-97e3bc68f856.2
-	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.28.1-20240209225522-97e3bc68f856.4
+	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.32.0-20240209225522-97e3bc68f856.1
 	github.com/astriaorg/go-sequencer-client v0.0.0-20240221205626-cf1140289aa1
 	github.com/cometbft/cometbft v0.37.0
 	github.com/gorilla/mux v1.8.1

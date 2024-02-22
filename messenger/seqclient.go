@@ -17,12 +17,12 @@ type SequencerClient struct {
 	c        *client.Client
 	signer   *client.Signer
 	nonce    uint32
-	rollupID [32]byte
+	rollupId []byte
 }
 
 // NewSequencerClient creates a new SequencerClient.
-func NewSequencerClient(rollupID [32]byte, sequencerAddr string) *SequencerClient {
-	log.Debug("Creating new sequencer client")
+func NewSequencerClient(sequencerAddr string, rollupId []byte) *SequencerClient {
+	log.Debug("creating new sequencer client")
 	signer, err := client.GenerateSigner()
 	if err != nil {
 		panic(err)
@@ -37,7 +37,7 @@ func NewSequencerClient(rollupID [32]byte, sequencerAddr string) *SequencerClien
 	return &SequencerClient{
 		c:        c,
 		signer:   signer,
-		rollupID: rollupID,
+		rollupId: rollupId,
 	}
 }
 
@@ -61,7 +61,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 			{
 				Value: &astriaPb.Action_SequenceAction{
 					SequenceAction: &astriaPb.SequenceAction{
-						RollupId: sc.rollupID[:],
+						RollupId: sc.rollupId,
 						Data:     data,
 					},
 				},
