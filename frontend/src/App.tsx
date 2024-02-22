@@ -1,5 +1,4 @@
 import { useState, ChangeEvent, KeyboardEvent, useEffect, useRef } from 'react';
-import 'nes.css/css/nes.min.css';
 import './App.css';
 import './global.css';
 
