@@ -1,11 +1,14 @@
 package messenger
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
@@ -35,7 +38,6 @@ type App struct {
 }
 
 func NewApp(cfg Config) *App {
-	log.SetLevel(log.DebugLevel)
 	log.Debugf("creating new messenger with config: %v", cfg)
 
 	m := NewMessenger()
@@ -142,10 +144,24 @@ func (a *App) Run() {
 	// run rest api server
 	a.setupRestRoutes()
 	server := a.makeRestServer()
-	err := server.ListenAndServe()
-	if errors.Is(err, http.ErrServerClosed) {
-		log.Errorf("rest api server closed\n")
-	} else if err != nil {
-		log.Errorf("error listening for rest api server: %s\n", err)
+
+	log.Infof("API server listening on %s\n", a.restAddr)
+	go func() {
+		err := server.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			log.Errorf("rest api server closed\n")
+		} else if err != nil {
+			log.Errorf("error listening for rest api server: %s\n", err)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
+
+	log.Info("Shutting down server...")
+	if err := server.Shutdown(context.Background()); err != nil {
+		log.Fatalf("Could not gracefully shutdown the server: %v\n", err)
 	}
+	log.Info("Server gracefully stopped")
 }

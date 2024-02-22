@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+
 	// load env vars
 	var cfg messenger.Config
 	if err := envconfig.Process(context.Background(), &cfg); err != nil {
