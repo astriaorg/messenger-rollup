@@ -2,6 +2,7 @@ package messenger
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/json"
 	"fmt"
 
@@ -21,12 +22,9 @@ type SequencerClient struct {
 }
 
 // NewSequencerClient creates a new SequencerClient.
-func NewSequencerClient(sequencerAddr string, rollupId []byte) *SequencerClient {
+func NewSequencerClient(sequencerAddr string, rollupId []byte, private ed25519.PrivateKey) *SequencerClient {
 	log.Debug("creating new sequencer client")
-	signer, err := client.GenerateSigner()
-	if err != nil {
-		panic(err)
-	}
+	signer := client.NewSigner(private)
 
 	// default tendermint RPC endpoint
 	c, err := client.NewClient(sequencerAddr)
