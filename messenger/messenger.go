@@ -23,7 +23,7 @@ type Config struct {
 	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
 	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
 	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
-	RollupId     string `env:"ROLLUP_ID, default=messenger-rollup"`
+	RollupID     string `env:"ROLLUP_ID, default=messenger-rollup"`
 }
 
 // App is the main application struct, containing all the necessary components.
