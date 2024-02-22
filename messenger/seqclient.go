@@ -2,7 +2,6 @@ package messenger
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 
@@ -15,13 +14,14 @@ import (
 
 // SequencerClient is a client for interacting with the sequencer.
 type SequencerClient struct {
-	c      *client.Client
-	signer *client.Signer
-	nonce  uint32
+	c        *client.Client
+	signer   *client.Signer
+	nonce    uint32
+	rollupId []byte
 }
 
 // NewSequencerClient creates a new SequencerClient.
-func NewSequencerClient(sequencerAddr string) *SequencerClient {
+func NewSequencerClient(sequencerAddr string, rollupId []byte) *SequencerClient {
 	log.Debug("creating new sequencer client")
 	signer, err := client.GenerateSigner()
 	if err != nil {
@@ -35,8 +35,9 @@ func NewSequencerClient(sequencerAddr string) *SequencerClient {
 	}
 
 	return &SequencerClient{
-		c:      c,
-		signer: signer,
+		c:        c,
+		signer:   signer,
+		rollupId: rollupId,
 	}
 }
 
@@ -54,14 +55,13 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 		return nil, err
 	}
 
-	rollupId := sha256.Sum256([]byte("messenger-rollup"))
 	unsigned := &astriaPb.UnsignedTransaction{
 		Nonce: sc.nonce,
 		Actions: []*astriaPb.Action{
 			{
 				Value: &astriaPb.Action_SequenceAction{
 					SequenceAction: &astriaPb.SequenceAction{
-						RollupId: rollupId[:],
+						RollupId: sc.rollupId,
 						Data:     data,
 					},
 				},

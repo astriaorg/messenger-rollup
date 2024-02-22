@@ -3,7 +3,6 @@ package messenger
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 
@@ -17,24 +16,28 @@ import (
 // ExecutionServiceServerV1Alpha2 is a server that implements the ExecutionServiceServer interface.
 type ExecutionServiceServerV1Alpha2 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
-	m *Messenger
+	m        *Messenger
+	rollupId []byte
 }
 
 // NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
-func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Alpha2 {
+func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupId []byte) *ExecutionServiceServerV1Alpha2 {
 	return &ExecutionServiceServerV1Alpha2{
-		m: m,
+		m:        m,
+		rollupId: rollupId,
 	}
 }
 
 func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
-	rollupId := sha256.Sum256([]byte("messenger-rollup"))
-	return &astriaPb.GenesisInfo{
-		RollupId:                    rollupId[:],
+	log.Debug("GetGenesisInfo called", "request", req)
+	res := &astriaPb.GenesisInfo{
+		RollupId:                    s.rollupId,
 		SequencerGenesisBlockHeight: uint32(1),
 		CelestiaBaseBlockHeight:     uint32(1),
 		CelestiaBlockVariance:       uint32(1),
-	}, nil
+	}
+	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
+	return res, nil
 }
 
 // getSingleBlock retrieves a single block by its height.
@@ -95,6 +98,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
+	log.Debug("ExecuteBlock called", "request", req)
 	// check if the prev block hash matches the current latest block
 	if !bytes.Equal(req.PrevBlockHash, s.m.GetLatestBlock().Hash[:]) {
 		return nil, errors.New("invalid prev block hash")
@@ -165,18 +169,4 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 
 	log.Debug("UpdateCommitmentState completed", "request", req)
 	return req.CommitmentState, nil
-}
-
-func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
-	log.Debug("GetGenesisInfo called", "request", req)
-	// FIXME - use envars/config
-	rollupId := sha256.Sum256([]byte("messenger-rollup"))
-	res := &astriaPb.GenesisInfo{
-		RollupId:                    rollupId[:],
-		SequencerGenesisBlockHeight: 1,
-		CelestiaBaseBlockHeight:     0,
-		CelestiaBlockVariance:       0,
-	}
-	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
-	return res, nil
 }
