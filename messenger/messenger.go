@@ -20,7 +20,7 @@ import (
 
 type Config struct {
 	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
-	SequencerRPC string `env:"SEQUENCER_RPC, default=localhost:26658"`
+	SequencerRPC string `env:"SEQUENCER_RPC, default=localhost:26657"`
 	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
 	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
 }
