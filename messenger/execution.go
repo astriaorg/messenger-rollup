@@ -3,7 +3,6 @@ package messenger
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 
@@ -17,13 +16,15 @@ import (
 // ExecutionServiceServerV1Alpha2 is a server that implements the ExecutionServiceServer interface.
 type ExecutionServiceServerV1Alpha2 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
-	m *Messenger
+	m        *Messenger
+	rollupID [32]byte
 }
 
 // NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
-func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Alpha2 {
+func NewExecutionServiceServerV1Alpha2(rollupID [32]byte, m *Messenger) *ExecutionServiceServerV1Alpha2 {
 	return &ExecutionServiceServerV1Alpha2{
-		m: m,
+		m:        m,
+		rollupID: rollupID,
 	}
 }
 
@@ -159,13 +160,12 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 
 func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
 	log.Debug("GetGenesisInfo called", "request", req)
-	// FIXME - use envars/config
-	rollupId := sha256.Sum256([]byte("messenger-rollup"))
 	res := &astriaPb.GenesisInfo{
-		RollupId:                    rollupId[:],
+		RollupId:                    s.rollupID[:],
 		SequencerGenesisBlockHeight: 1,
-		CelestiaBaseBlockHeight:     0,
-		CelestiaBlockVariance:       0,
+		// following fields ignored when running conductor in soft mode
+		CelestiaBaseBlockHeight: 0,
+		CelestiaBlockVariance:   0,
 	}
 	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
 	return res, nil

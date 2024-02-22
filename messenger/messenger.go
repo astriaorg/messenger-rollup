@@ -1,6 +1,7 @@
 package messenger
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"net"
@@ -15,6 +16,7 @@ import (
 )
 
 type Config struct {
+	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
 	SequencerRPC string `env:"SEQUENCER_RPC, default=localhost:26658"`
 	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
 	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
@@ -22,6 +24,8 @@ type Config struct {
 
 // App is the main application struct, containing all the necessary components.
 type App struct {
+	rollupID        [32]byte
+	rollupName      string
 	executionRPC    string
 	sequencerRPC    string
 	sequencerClient SequencerClient
@@ -31,15 +35,20 @@ type App struct {
 }
 
 func NewApp(cfg Config) *App {
+	log.SetLevel(log.DebugLevel)
 	log.Debugf("creating new messenger with config: %v", cfg)
 
 	m := NewMessenger()
 	router := mux.NewRouter()
 
+	rollupID := sha256.Sum256([]byte(cfg.RollupName))
+
 	return &App{
+		rollupID:        rollupID,
+		rollupName:      cfg.RollupName,
 		executionRPC:    cfg.ConductorRPC,
 		sequencerRPC:    cfg.SequencerRPC,
-		sequencerClient: *NewSequencerClient(cfg.SequencerRPC),
+		sequencerClient: *NewSequencerClient(rollupID, cfg.SequencerRPC),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
 		messenger:       m,
@@ -48,7 +57,7 @@ func NewApp(cfg Config) *App {
 
 // makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
-	return NewExecutionServiceServerV1Alpha2(a.messenger)
+	return NewExecutionServiceServerV1Alpha2(a.rollupID, a.messenger)
 }
 
 // setupRestRoutes sets up the routes for the REST API.

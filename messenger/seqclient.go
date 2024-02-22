@@ -14,13 +14,14 @@ import (
 
 // SequencerClient is a client for interacting with the sequencer.
 type SequencerClient struct {
-	c      *client.Client
-	signer *client.Signer
-	nonce  uint32
+	c        *client.Client
+	signer   *client.Signer
+	nonce    uint32
+	rollupID [32]byte
 }
 
 // NewSequencerClient creates a new SequencerClient.
-func NewSequencerClient(sequencerAddr string) *SequencerClient {
+func NewSequencerClient(rollupID [32]byte, sequencerAddr string) *SequencerClient {
 	log.Debug("creating new sequencer client")
 	signer, err := client.GenerateSigner()
 	if err != nil {
@@ -34,8 +35,9 @@ func NewSequencerClient(sequencerAddr string) *SequencerClient {
 	}
 
 	return &SequencerClient{
-		c:      c,
-		signer: signer,
+		c:        c,
+		signer:   signer,
+		rollupID: rollupID,
 	}
 }
 
@@ -59,7 +61,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 			{
 				Value: &astriaPb.Action_SequenceAction{
 					SequenceAction: &astriaPb.SequenceAction{
-						RollupId: []byte("messenger-rollup"),
+						RollupId: sc.rollupID[:],
 						Data:     data,
 					},
 				},
