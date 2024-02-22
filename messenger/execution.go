@@ -27,6 +27,16 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Al
 	}
 }
 
+func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
+	rollupId := sha256.Sum256([]byte("messenger-rollup"))
+	return &astriaPb.GenesisInfo{
+		RollupId:                    rollupId[:],
+		SequencerGenesisBlockHeight: uint32(1),
+		CelestiaBaseBlockHeight:     uint32(1),
+		CelestiaBlockVariance:       uint32(1),
+	}, nil
+}
+
 // getSingleBlock retrieves a single block by its height.
 func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaPb.Block, error) {
 	log.Debug("getSingleBlock called", "height", height)
