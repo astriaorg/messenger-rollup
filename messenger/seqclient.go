@@ -22,7 +22,7 @@ type SequencerClient struct {
 
 // NewSequencerClient creates a new SequencerClient.
 func NewSequencerClient(rollupID [32]byte, sequencerAddr string) *SequencerClient {
-	log.Debug("creating new sequencer client")
+	log.Debug("Creating new sequencer client")
 	signer, err := client.GenerateSigner()
 	if err != nil {
 		panic(err)

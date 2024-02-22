@@ -38,7 +38,7 @@ type App struct {
 }
 
 func NewApp(cfg Config) *App {
-	log.Debugf("creating new messenger with config: %v", cfg)
+	log.Debugf("Creating new messenger app with config: %v", cfg)
 
 	m := NewMessenger()
 	router := mux.NewRouter()
@@ -149,7 +149,7 @@ func (a *App) Run() {
 	go func() {
 		err := server.ListenAndServe()
 		if errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("rest api server closed\n")
+			log.Warnf("rest api server closed\n")
 		} else if err != nil {
 			log.Errorf("error listening for rest api server: %s\n", err)
 		}
