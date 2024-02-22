@@ -68,15 +68,16 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 			},
 		},
 	}
-	log.Debugf("unsigned tx: %v", unsigned)
 
 	signed, err := sc.signer.SignTransaction(unsigned)
 	if err != nil {
 		panic(err)
 	}
-	log.Debugf("signed tx: %v\n", signed)
 
-	log.Debugf("submitting tx to sequencer. sender: %s, message: %s\n", tx.Sender, tx.Message)
+	log.WithFields(log.Fields{
+		"sender":  tx.Sender,
+		"message": tx.Message,
+	}).Debug("submitting tx to sequencer.")
 
 	resp, err := sc.broadcastTxSync(signed)
 	if err != nil {

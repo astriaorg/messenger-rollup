@@ -124,7 +124,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Debugf("postMessage response: %v\n", resp.Log)
+	log.WithField("responseCode", resp.Code).Debug("transaction submission result")
 }
 
 func (a *App) Run() {
