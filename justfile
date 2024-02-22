@@ -1,4 +1,7 @@
-set dotenv-filename := "example.env"
+set dotenv-load
+
+init:
+  cp .env.example .env
 
 run:
     clear

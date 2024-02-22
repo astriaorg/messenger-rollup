@@ -17,21 +17,21 @@ import (
 type ExecutionServiceServerV1Alpha2 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
 	m        *Messenger
-	rollupId []byte
+	rollupID []byte
 }
 
 // NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
-func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupId []byte) *ExecutionServiceServerV1Alpha2 {
+func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupID []byte) *ExecutionServiceServerV1Alpha2 {
 	return &ExecutionServiceServerV1Alpha2{
 		m:        m,
-		rollupId: rollupId,
+		rollupID: rollupID,
 	}
 }
 
 func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
 	log.Debug("GetGenesisInfo called", "request", req)
 	res := &astriaPb.GenesisInfo{
-		RollupId:                    s.rollupId,
+		RollupId:                    s.rollupID,
 		SequencerGenesisBlockHeight: uint32(1),
 		CelestiaBaseBlockHeight:     uint32(1),
 		CelestiaBlockVariance:       uint32(1),

@@ -1,11 +1,14 @@
 package messenger
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
@@ -19,7 +22,8 @@ type Config struct {
 	SequencerRPC string `env:"SEQUENCER_RPC, default=http://localhost:26657"`
 	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
 	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
-	RollupId     string `env:"ROLLUP_ID, default=messenger-rollup"`
+	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
+	RollupID     string `env:"ROLLUP_ID, default=messenger-rollup"`
 }
 
 // App is the main application struct, containing all the necessary components.
@@ -30,31 +34,33 @@ type App struct {
 	restRouter      *mux.Router
 	restAddr        string
 	messenger       *Messenger
-	rollupId        []byte
+	rollupName      string
+	rollupID        []byte
 }
 
 func NewApp(cfg Config) *App {
-	log.Debugf("creating new messenger with config: %v", cfg)
+	log.Debugf("Creating new messenger app with config: %v", cfg)
 
 	m := NewMessenger()
 	router := mux.NewRouter()
 
-	rollupId := sha256.Sum256([]byte(cfg.RollupId))
+	rollupID := sha256.Sum256([]byte(cfg.RollupName))
 
 	return &App{
 		executionRPC:    cfg.ConductorRPC,
 		sequencerRPC:    cfg.SequencerRPC,
-		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupId[:]),
+		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupID[:]),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
 		messenger:       m,
-		rollupId:        rollupId[:],
+		rollupName:      cfg.RollupName,
+		rollupID:        rollupID[:],
 	}
 }
 
 // makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
-	return NewExecutionServiceServerV1Alpha2(a.messenger, a.rollupId)
+	return NewExecutionServiceServerV1Alpha2(a.messenger, a.rollupID)
 }
 
 // setupRestRoutes sets up the routes for the REST API.
@@ -139,10 +145,24 @@ func (a *App) Run() {
 	// run rest api server
 	a.setupRestRoutes()
 	server := a.makeRestServer()
-	err := server.ListenAndServe()
-	if errors.Is(err, http.ErrServerClosed) {
-		log.Errorf("rest api server closed\n")
-	} else if err != nil {
-		log.Errorf("error listening for rest api server: %s\n", err)
+
+	log.Infof("API server listening on %s\n", a.restAddr)
+	go func() {
+		err := server.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			log.Warnf("rest api server closed\n")
+		} else if err != nil {
+			log.Errorf("error listening for rest api server: %s\n", err)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
+
+	log.Info("Shutting down server...")
+	if err := server.Shutdown(context.Background()); err != nil {
+		log.Fatalf("Could not gracefully shutdown the server: %v\n", err)
 	}
+	log.Info("Server gracefully stopped")
 }
