@@ -31,7 +31,7 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupID []byte) *Execution
 func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
 	log.Debug("GetGenesisInfo called", "request", req)
 	res := &astriaPb.GenesisInfo{
-		rollupID:                    s.rollupID,
+		RollupId:                    s.rollupID,
 		SequencerGenesisBlockHeight: uint32(1),
 		CelestiaBaseBlockHeight:     uint32(1),
 		CelestiaBlockVariance:       uint32(1),
