@@ -3,6 +3,10 @@ set dotenv-load
 init:
   cp .env.example .env
 
+rebuild:
+    go clean
+    go build
+
 run:
     clear
     go run main.go

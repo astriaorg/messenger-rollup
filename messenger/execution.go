@@ -3,6 +3,7 @@ package messenger
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 
@@ -10,7 +11,6 @@ import (
 
 	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
 	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ExecutionServiceServerV1Alpha2 is a server that implements the ExecutionServiceServer interface.
@@ -29,52 +29,50 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupID []byte) *Execution
 }
 
 func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
-	log.Debug("GetGenesisInfo called", "request", req)
+	log.Debug("GetGenesisInfo called")
 	res := &astriaPb.GenesisInfo{
 		RollupId:                    s.rollupID,
 		SequencerGenesisBlockHeight: uint32(1),
 		CelestiaBaseBlockHeight:     uint32(1),
 		CelestiaBlockVariance:       uint32(1),
 	}
-	log.Debug("GetGenesisInfo completed", "request", req, "response", res)
+	log.WithFields(log.Fields{
+		"rollupId": hex.EncodeToString(res.RollupId),
+	}).Debug("GetGenesisInfo completed")
 	return res, nil
-}
-
-// getSingleBlock retrieves a single block by its height.
-func (s *ExecutionServiceServerV1Alpha2) getSingleBlock(height uint32) (*astriaPb.Block, error) {
-	log.Debug("getSingleBlock called", "height", height)
-	if height > s.m.Height() {
-		return nil, errors.New("block not found")
-	}
-
-	block := s.m.Blocks[height]
-	timestamp := timestamppb.New(block.Timestamp)
-
-	return &astriaPb.Block{
-		Number:          height,
-		Hash:            block.Hash[:],
-		ParentBlockHash: s.m.Blocks[height-1].Hash[:],
-		Timestamp:       timestamp,
-	}, nil
 }
 
 // GetBlock retrieves a block by its identifier.
 func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astriaPb.GetBlockRequest) (*astriaPb.Block, error) {
-	log.Debug("GetBlock called", "request", req)
+	log.WithField(
+		"identifier", req.Identifier,
+	).Debug("GetBlock called")
 	switch req.Identifier.Identifier.(type) {
 	case *astriaPb.BlockIdentifier_BlockNumber:
-		block, err := s.getSingleBlock(uint32(req.Identifier.GetBlockNumber()))
+		block, err := s.m.GetSingleBlock(uint32(req.Identifier.GetBlockNumber()))
 		if err != nil {
 			return nil, err
 		}
-		return block, nil
+		blockPb, err := block.ToPb()
+		if err != nil {
+			return nil, err
+		}
+
+		log.WithField(
+			"blockHash", hex.EncodeToString(block.Hash[:]),
+		).Debugf("GetBlock completed with response: %v\n", block)
+		return blockPb, nil
 	default:
+		log.Debugf("GetBlock completed with error: invalid identifier: %v\n", req.Identifier)
 		return nil, errors.New("invalid identifier")
 	}
 }
 
 // BatchGetBlocks retrieves multiple blocks by their identifiers.
 func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req *astriaPb.BatchGetBlocksRequest) (*astriaPb.BatchGetBlocksResponse, error) {
+	log.WithField(
+		"identifiers", req.Identifiers,
+	).Debug("BatchGetBlocks called")
 	res := &astriaPb.BatchGetBlocksResponse{
 		Blocks: []*astriaPb.Block{},
 	}
@@ -93,12 +91,14 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 			res.Blocks = append(res.Blocks, blockPb)
 		}
 	}
+
+	log.Debugf("BatchGetBlocks completed with response: %v\n", res)
 	return res, nil
 }
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
-	log.Debug("ExecuteBlock called", "request", req)
+	log.WithField("prevBlockHash", hex.EncodeToString(req.PrevBlockHash)).Debugf("ExecuteBlock called")
 	// check if the prev block hash matches the current latest block
 	if !bytes.Equal(req.PrevBlockHash, s.m.GetLatestBlock().Hash[:]) {
 		return nil, errors.New("invalid prev block hash")
@@ -110,6 +110,12 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 			return nil, errors.New("failed to unmarshal transaction")
 		}
 		txs = append(txs, *tx)
+		log.WithFields(
+			log.Fields{
+				"sender":  tx.Sender,
+				"message": tx.Message,
+			},
+		).Debug("unmarshalled transaction")
 	}
 	block := NewBlock(req.PrevBlockHash, uint32(len(s.m.Blocks)), txs, req.Timestamp.AsTime())
 	s.m.Blocks = append(s.m.Blocks, block)
@@ -118,11 +124,14 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 	if err != nil {
 		return nil, errors.New("failed to convert block to protobuf")
 	}
+
+	log.WithField("blockHash", hex.EncodeToString(block.Hash[:])).Debugf("ExecuteBlock completed")
 	return blockPb, nil
 }
 
 // GetCommitmentState retrieves the current commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
+	log.Debug("GetCommitmentState called")
 	soft, err := s.m.GetSoftBlock().ToPb()
 	if err != nil {
 		return nil, err
@@ -136,12 +145,26 @@ func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context,
 		Soft: soft,
 		Firm: firm,
 	}
+
+	log.WithFields(
+		log.Fields{
+			"soft": soft.Number,
+			"firm": firm.Number,
+		},
+	).Debugf("GetCommitmentState completed")
 	return res, nil
 }
 
 // UpdateCommitmentState updates the commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Context, req *astriaPb.UpdateCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
-	log.Debug("UpdateCommitmentState called", "request", req)
+	log.WithFields(
+		log.Fields{
+			"soft":     req.CommitmentState.Soft.Number,
+			"softHash": hex.EncodeToString(req.CommitmentState.Soft.Hash),
+			"firm":     req.CommitmentState.Firm.Number,
+			"firmHash": hex.EncodeToString(req.CommitmentState.Firm.Hash),
+		},
+	).Debugf("UpdateCommitmentState called")
 	softHeight := req.CommitmentState.Soft.Number
 	firmHeight := req.CommitmentState.Firm.Number
 
@@ -167,6 +190,11 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 	s.m.soft = softHeight
 	s.m.firm = firmHeight
 
-	log.Debug("UpdateCommitmentState completed", "request", req)
+	log.WithFields(
+		log.Fields{
+			"soft": s.m.soft,
+			"firm": s.m.firm,
+		},
+	).Debugf("UpdateCommitmentState completed")
 	return req.CommitmentState, nil
 }

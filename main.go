@@ -11,6 +11,7 @@ import (
 
 func main() {
 	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(&log.TextFormatter{})
 
 	// load env vars
 	var cfg messenger.Config
