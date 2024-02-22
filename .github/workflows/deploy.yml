@@ -30,8 +30,8 @@ jobs:
 
       - name: Set Git user
         run: |
-          git config --global user.name "jcstein"
-          git config --global user.email "mail@jcstein.dev"
+          git config --global user.name "steezeburger"
+          git config --global user.email "jesse@astria.org"
 
       - name: Deploy
         run: |
@@ -39,5 +39,5 @@ jobs:
           npm run deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_NAME: "Josh Stein"
-          GIT_EMAIL: "mail@jcstein.dev"
+          GIT_NAME: "Jesse Snyder"
+          GIT_EMAIL: "jesse@astria.org"
