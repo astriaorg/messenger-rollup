@@ -8,6 +8,6 @@ func main() {
 	// load env vars
 
 	// executionPort, sequencerPort, restApiPort
-	app := messenger.NewApp(":50051", "localhost:26658", ":8080")
+	app := messenger.NewApp(":50051", "http://localhost:26657", ":8080")
 	app.Run()
 }

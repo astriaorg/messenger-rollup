@@ -2,6 +2,7 @@ package messenger
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 
@@ -51,13 +52,14 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 		return nil, err
 	}
 
+	rollupId := sha256.Sum256([]byte("messenger-rollup"))
 	unsigned := &astriaPb.UnsignedTransaction{
 		Nonce: sc.nonce,
 		Actions: []*astriaPb.Action{
 			{
 				Value: &astriaPb.Action_SequenceAction{
 					SequenceAction: &astriaPb.SequenceAction{
-						RollupId: []byte("messenger-rollup"),
+						RollupId: rollupId[:],
 						Data:     data,
 					},
 				},

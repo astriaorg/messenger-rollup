@@ -3,11 +3,12 @@ package messenger
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 
-	astriaGrpc "buf.build/gen/go/astria/astria/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
-	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/execution/v1alpha2"
+	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
+	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -22,6 +23,16 @@ func NewExecutionServiceServerV1Alpha2(m *Messenger) *ExecutionServiceServerV1Al
 	return &ExecutionServiceServerV1Alpha2{
 		m: m,
 	}
+}
+
+func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
+	rollupId := sha256.Sum256([]byte("messenger-rollup"))
+	return &astriaPb.GenesisInfo{
+		RollupId:                    rollupId[:],
+		SequencerGenesisBlockHeight: uint32(1),
+		CelestiaBaseBlockHeight:     uint32(1),
+		CelestiaBlockVariance:       uint32(1),
+	}, nil
 }
 
 // getSingleBlock retrieves a single block by its height.
@@ -82,6 +93,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
+	println("ExecuteBlock called", "request", req)
 	if !bytes.Equal(req.PrevBlockHash, s.m.Blocks[len(s.m.Blocks)-1].hash[:]) {
 		return nil, errors.New("invalid prev block hash")
 	}
