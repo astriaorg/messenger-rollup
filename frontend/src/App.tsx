@@ -5,11 +5,12 @@ import './global.css';
 // Define a type for the message object
 type Message = {
   text: string;
+  sender: string;
   from: 'left' | 'right';
 };
 
 // bestest random ever
-const senderId = Math.random().toString(36).substr(2, 9);
+const senderId = Math.random().toString(36).substr(2);
 
 function App() {
   // Use the Message type for the messages state
@@ -22,6 +23,21 @@ function App() {
 
   const sender = `user-${senderId}`;
 
+  const avatars = [
+    'nes-mario',
+    'nes-ash',
+    'nes-pokeball',
+    'nes-bulbasaur',
+    'nes-charmander',
+    'nes-squirtle',
+    'nes-kirby',
+  ];
+
+  const getAvatar = (id: string) => {
+    const hashId = id.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
+    return avatars[Math.abs(hashId) % avatars.length];
+  };
+
   // get messages from rollup ws
   useEffect(() => {
     ws.current = new WebSocket(import.meta.env.VITE_APP_WEBSOCKET_URL);
@@ -30,6 +46,7 @@ function App() {
       if (data.message && data.sender !== sender) {
         const message: Message = {
           text: data.message,
+          sender: data.sender,
           from: 'left',
         };
         setMessages((prevMessages) => [...prevMessages, message]);
@@ -59,7 +76,7 @@ function App() {
         })
       });
       // be optimistic. Append a new message to the messages array
-      setMessages([...messages, { text: inputValue, from: 'right' }]);
+      setMessages([...messages, { text: inputValue, sender, from: 'right' }]);
       setInputValue('');
     }
   };
@@ -78,17 +95,17 @@ function App() {
 
   return (
     <div className="nes-container with-title is-centered">
-      <div className="nes-balloon from-left">
-        <p>NES.tia Chat</p>
+      <div className="title">
+        <p>Modular Chat</p>
       </div>
       <div className="message-list">
       {messages.map((message, index) => (
         <section key={index} className={`message -${message.from}`}>
-          {message.from === 'left' && <i className="nes-mario"></i>}
+          {message.from === 'left' && <i className={getAvatar(message.sender)}></i>}
           <div className={`nes-balloon from-${message.from}`}>
             <p>{message.text}</p>
           </div>
-          {message.from === 'right' && <i className="nes-kirby"></i>}
+          {message.from === 'right' && <i className={getAvatar(message.sender)}></i>}
         </section>
       ))}
       <div ref={endOfMessagesRef} />
