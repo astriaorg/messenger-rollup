@@ -131,3 +131,11 @@ func (m *Messenger) GetLatestBlock() *Block {
 func (m *Messenger) Height() uint32 {
 	return uint32(len(m.Blocks))
 }
+
+func (m *Messenger) AddBlock(block Block) error {
+	if !bytes.Equal(block.ParentHash[:], m.GetLatestBlock().Hash[:]) {
+		return errors.New("invalid prev block hash")
+	}
+	m.Blocks = append(m.Blocks, block)
+	return nil
+}
