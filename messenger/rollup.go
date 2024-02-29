@@ -15,9 +15,8 @@ import (
 
 // Transaction represents a transaction in the blockchain.
 type Transaction struct {
-	Sender   string `json:"sender"`
-	Message  string `json:"message"`
-	Priority uint32 `json:"priority"`
+	Sender  string `json:"sender"`
+	Message string `json:"message"`
 }
 
 func HashTxs(txs []Transaction) ([32]byte, error) {
