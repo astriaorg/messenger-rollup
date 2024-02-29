@@ -20,6 +20,9 @@ docker-build:
 docker-run:
     clear
     open http://localhost:3000
+    if [ ! -f ./docker-compose/.data/cometbft/priv_validator_state.json ]; then \
+        ./docker-compose/reset.sh; \
+    fi
     docker-compose -f docker-compose/local.yaml up
 
 send-message:
