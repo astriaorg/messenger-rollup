@@ -38,7 +38,7 @@ just docker-build
 ```bash
 curl -kv localhost:8080/message
    -H "Accept: application/json" -H "Content-Type: application/json" \
-   --data '{"sender":"1c0c490f1b5528d8173c5de46d131160e4b2c0c3","message":"hello my friends","priority":1}'
+   --data '{"sender":"1c0c490f1b5528d8173c5de46d131160e4b2c0c3","message":"hello my friends"}'
    
 curl -kv localhost:8080/block/1
 ```

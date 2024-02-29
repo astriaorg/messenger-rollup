@@ -55,8 +55,7 @@ function App() {
         },
         body: JSON.stringify({
           sender,
-          message: inputValue,
-          priority: 1
+          message: inputValue
         })
       });
       // be optimistic. Append a new message to the messages array
