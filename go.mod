@@ -9,6 +9,8 @@ require (
 	github.com/astriaorg/go-sequencer-client v0.0.0-20240221205626-cf1140289aa1
 	github.com/cometbft/cometbft v0.37.0
 	github.com/gorilla/mux v1.8.1
+	github.com/gorilla/websocket v1.5.0
+	github.com/rs/cors v1.10.1
 	github.com/sethvargo/go-envconfig v1.0.0
 	github.com/sirupsen/logrus v1.9.0
 	google.golang.org/grpc v1.60.1
@@ -25,7 +27,6 @@ require (
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect

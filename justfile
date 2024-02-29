@@ -11,6 +11,17 @@ run:
     clear
     go run main.go
 
+docker-reset:
+    ./docker-compose/reset.sh
+
+docker-build:
+    docker-compose -f docker-compose/local.yaml build
+
+docker-run:
+    clear
+    open http://localhost:3000
+    docker-compose -f docker-compose/local.yaml up
+
 send-message:
     curl -v -X POST -H \
         "Content-Type: application/json" -d \

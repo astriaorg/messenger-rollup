@@ -1,0 +1,76 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: ../frontend
+    environment:
+      VITE_APP_WEBSOCKET_URL: "ws://localhost:8080/ws"
+      VITE_APP_API_URL: "http://localhost:8080"
+    ports:
+      - "3000:3000"
+  rollup:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      ROLLUP_NAME: "messenger-rollup"
+      SEQUENCER_RPC: "http://cometbft:26657"
+      CONDUCTOR_RPC: "0.0.0.0:50051"
+      RESTAPI_PORT: ":8080"
+      SEQUENCER_PRIVATE: "00fd4d6af5ac34d29d63a04ecf7da1ccfcbcdf7f7ed4042b8975e1c54e96d685"
+    ports:
+      - "8080:8080"
+  conductor:
+    image: ghcr.io/astriaorg/conductor:latest
+    environment:
+      ASTRIA_CONDUCTOR_LOG: "astria_conductor=debug"
+      ASTRIA_CONDUCTOR_EXECUTION_RPC_URL: "http://rollup:50051"
+      ASTRIA_CONDUCTOR_EXECUTION_COMMIT_LEVEL: "SoftOnly"
+      ASTRIA_CONDUCTOR_CELESTIA_NODE_URL: ""
+      ASTRIA_CONDUCTOR_CELESTIA_BEARER_TOKEN: ""
+      ASTRIA_CONDUCTOR_SEQUENCER_URL: "ws://cometbft:26657/websocket"
+      ASTRIA_CONDUCTOR_ENABLE_OPTIMISM: false
+      ASTRIA_CONDUCTOR_ETHEREUM_L1_URL: ""
+      ASTRIA_CONDUCTOR_OPTIMISM_PORTAL_CONTRACT_ADDRESS: ""
+      ASTRIA_CONDUCTOR_INITIAL_ETHEREUM_L1_BLOCK_HEIGHT: 1
+      ASTRIA_CONDUCTOR_FORCE_STDOUT: true
+      ASTRIA_CONDUCTOR_NO_OTEL: true
+      ASTRIA_CONDUCTOR_PRETTY_PRINT: true
+      ASTRIA_CONDUCTOR_NO_METRICS: true
+      ASTRIA_CONDUCTOR_METRICS_HTTP_LISTENER_ADDR: ""
+      RUST_BACKTRACE: 1
+    depends_on:
+      rollup:
+        condition: service_started
+      cometbft:
+        condition: service_started
+  cometbft:
+    image: docker.io/cometbft/cometbft:v0.37.x
+    environment:
+      COMET_BFT_RPC_PORT: 26657
+    volumes:
+      - ./cometbft/config/:/cometbft/config/
+      - ./.data/cometbft/:/cometbft/data/
+    ports:
+      - "26657:26657"
+    depends_on:
+      sequencer:
+        condition: service_started
+  sequencer:
+    image: ghcr.io/astriaorg/sequencer:latest
+    environment:
+      ASTRIA_SEQUENCER_LOG: "astria_sequencer=debug"
+      ASTRIA_SEQUENCER_LISTEN_ADDR: "0.0.0.0:26658"
+      ASTRIA_SEQUENCER_GRPC_ADDR: "0.0.0.0:8080"
+      ASTRIA_SEQUENCER_DB_FILEPATH: "/tmp/sequencer_db"
+      ASTRIA_SEQUENCER_ENABLE_MINT: false
+      ASTRIA_SEQUENCER_FORCE_STDOUT: true
+      ASTRIA_SEQUENCER_NO_OTEL: true
+      ASTRIA_SEQUENCER_PRETTY_PRINT: true
+      ASTRIA_SEQUENCER_NO_METRICS: true
+      ASTRIA_SEQUENCER_METRICS_HTTP_LISTENER_ADDR: ""
+      RUST_BACKTRACE: 1
+    volumes:
+      - ./.data/sequencer:/tmp/sequencer_db
+    ports:
+      - "26658:26658"

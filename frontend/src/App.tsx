@@ -8,13 +8,37 @@ type Message = {
   from: 'left' | 'right';
 };
 
+// bestest random ever
+const senderId = Math.random().toString(36).substr(2, 9);
+
 function App() {
   // Use the Message type for the messages state
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
+  const ws = useRef<WebSocket | null>(null);
 
   // Set latest message ref
   const endOfMessagesRef = useRef<null | HTMLDivElement>(null);
+
+  const sender = `user-${senderId}`;
+
+  // get messages from rollup ws
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_APP_WEBSOCKET_URL);
+    ws.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.message && data.sender !== sender) {
+        const message: Message = {
+          text: data.message,
+          from: 'left',
+        };
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
+    };
+    return () => {
+      ws.current?.close();
+    };
+  }, [sender]);
 
   // Snap to latest message
   useEffect(() => {
@@ -23,7 +47,19 @@ function App() {
 
   const handleSendMessage = () => {
     if (inputValue.trim()) {
-      // Append a new message to the messages array
+      // Send to rollup api
+      fetch(`${import.meta.env.VITE_APP_API_URL}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender,
+          message: inputValue,
+          priority: 1
+        })
+      });
+      // be optimistic. Append a new message to the messages array
       setMessages([...messages, { text: inputValue, from: 'right' }]);
       setInputValue('');
     }
@@ -49,10 +85,11 @@ function App() {
       <div className="message-list">
       {messages.map((message, index) => (
         <section key={index} className={`message -${message.from}`}>
+          {message.from === 'left' && <i className="nes-mario"></i>}
           <div className={`nes-balloon from-${message.from}`}>
             <p>{message.text}</p>
           </div>
-          <i className="nes-kirby"></i>
+          {message.from === 'right' && <i className="nes-kirby"></i>}
         </section>
       ))}
       <div ref={endOfMessagesRef} />
