@@ -12,6 +12,27 @@ go get "github.com/astriaorg/go-sequencer-client"
 go get "github.com/cometbft/cometbft"
 ```
 
+## Running the rollup w/ docker-compose
+
+```bash
+just docker-run
+```
+
+This will launch a local sequencer, conductor, the rollup, and the chat frontend.
+
+### Reset rollup data
+
+```bash
+just docker-reset
+```
+
+### Rebuild rollup images
+
+You might need to rebuild the rollup docker images
+
+```bash
+just docker-build
+```
 
 ## Helpful things
 ```bash
