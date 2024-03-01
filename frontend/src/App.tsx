@@ -94,6 +94,7 @@ function App() {
   };
 
   return (
+    <>
     <div className="nes-container with-title is-centered">
       <div className="title">
         <p>Modular Chat</p>
@@ -128,6 +129,10 @@ function App() {
         </button>
       </div>
     </div>
+    <div className="footer">
+      <p>built by Astria with Celestia underneath</p>
+    </div>
+    </>
   );
 }
 
