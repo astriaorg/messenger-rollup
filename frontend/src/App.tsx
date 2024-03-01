@@ -38,6 +38,25 @@ function App() {
     return avatars[Math.abs(hashId) % avatars.length];
   };
 
+  // load recent messages
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_APP_API_URL}/recent`)
+      .then(response => response.json())
+      .then(data => {
+        const newMessages: Message[] = [];
+        for (const msg of data) {
+          const message: Message = {
+            text: msg.message,
+            sender: msg.sender,
+            from: msg.sender !== sender ? 'left' : 'right',
+          };
+          newMessages.push(message);
+        }
+        setMessages(newMessages);
+      })
+      .catch(error => console.error('Error:', error));
+  }, []);
+
   // get messages from rollup ws
   useEffect(() => {
     ws.current = new WebSocket(import.meta.env.VITE_APP_WEBSOCKET_URL);

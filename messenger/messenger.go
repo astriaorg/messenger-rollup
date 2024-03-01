@@ -94,6 +94,7 @@ func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
 func (a *App) setupRestRoutes() {
 	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
 	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
+	a.restRouter.HandleFunc("/recent", a.getRecentMessages).Methods("GET")
 	a.restRouter.HandleFunc("/ws", a.serveWS)
 }
 
@@ -136,6 +137,28 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(blockJson)
+}
+
+func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
+	var messages []Transaction
+	for i := uint32(1); i < a.messenger.Height(); i++ {
+		block := a.messenger.Blocks[i]
+		messages = append(messages, block.Txs...)
+	}
+
+	// keep only the most recent 100
+	if len(messages) > 100 {
+		messages = messages[len(messages)-100:]
+	}
+
+	messagesJson, err := json.Marshal(messages)
+	if err != nil {
+		log.Errorf("error marshalling messages: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(messagesJson)
 }
 
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
