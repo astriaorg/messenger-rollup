@@ -43,13 +43,19 @@ function App() {
     ws.current = new WebSocket(import.meta.env.VITE_APP_WEBSOCKET_URL);
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.message && data.sender !== sender) {
-        const message: Message = {
-          text: data.message,
-          sender: data.sender,
-          from: 'left',
-        };
-        setMessages((prevMessages) => [...prevMessages, message]);
+      if (data && data.length) {
+        const newMessages: Message[] = [];
+        for (const msg of data) {
+          if (msg.message && msg.sender !== sender) {
+            const message: Message = {
+              text: msg.message,
+              sender: msg.sender,
+              from: 'left',
+            };
+            newMessages.push(message);
+          }
+        }
+        setMessages((prevMessages) => [...prevMessages, ...newMessages]);
       }
     };
     return () => {

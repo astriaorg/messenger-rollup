@@ -222,18 +222,16 @@ func (a *App) Run() {
 				continue
 			}
 
-			for _, tx := range block.Txs {
-				txJson, err := json.Marshal(tx)
-				if err != nil {
-					log.Errorf("Failed to marshal transaction: %v", err)
-					continue
-				}
-
+			txsJson, err := json.Marshal(block.Txs)
+			log.Debugf("marshalled txsJson: %s", txsJson)
+			if err != nil {
+				log.Errorf("Failed to marshal transactions: %v", err)
+			} else {
 				for client := range a.wsClients {
 					select {
-					case client.egress <- txJson:
+					case client.egress <- txsJson:
 					default:
-						log.Warnf("Could not send transaction to ws client: %s", txJson)
+						log.Warnf("Could not send transactions to ws client: %s", txsJson)
 					}
 				}
 			}
