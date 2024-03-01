@@ -141,9 +141,14 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
 	var messages []Transaction
-	for i := uint32(1); i < a.messenger.Height(); i++ {
-		block := a.messenger.Blocks[i]
-		messages = append(messages, block.Txs...)
+	for i := len(a.messenger.Blocks); i > 0; i-- {
+		block := a.messenger.Blocks[i-1]
+		if len(block.Txs) > 0 {
+			messages = append(block.Txs, messages...)
+			if len(messages) >= 100 {
+				break
+			}
+		}
 	}
 
 	// keep only the most recent 100
