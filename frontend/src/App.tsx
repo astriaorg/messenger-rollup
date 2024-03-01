@@ -130,7 +130,15 @@ function App() {
       </div>
     </div>
     <div className="footer">
-      <p>built by Astria with Celestia underneath</p>
+      <p>built by <a href="https://astria.org" target="_blank">Astria</a> with <a href="https://celestia.org/" target="_blank">Celestia</a> underneath</p>
+      <p>
+        <a href="https://twitter.com/AstriaOrg" target="_blank">
+          <i className="nes-icon close is-medium"></i>
+        </a>
+        <a href="https://github.com/astriaorg/messenger-rollup" target="_blank">
+          <i className="nes-icon github is-medium"></i>
+        </a>
+      </p>
     </div>
     </>
   );
