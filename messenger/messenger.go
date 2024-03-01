@@ -58,7 +58,7 @@ type App struct {
 func NewApp(cfg Config) *App {
 	log.Debugf("Creating new messenger app with config: %v", cfg)
 
-	newBlockChan := make(chan Block)
+	newBlockChan := make(chan Block, 20)
 	m := NewMessenger(newBlockChan)
 	router := mux.NewRouter()
 
@@ -233,7 +233,7 @@ func (a *App) Run() {
 					select {
 					case client.egress <- txJson:
 					default:
-						log.Warnf("Could not send transaction to ws client")
+						log.Warnf("Could not send transaction to ws client: %s", txJson)
 					}
 				}
 			}

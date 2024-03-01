@@ -24,7 +24,7 @@ func NewWSClient(conn *websocket.Conn, app *App) *WSClient {
 	return &WSClient{
 		conn:   conn,
 		app:    app,
-		egress: make(chan []byte),
+		egress: make(chan []byte, 250),
 	}
 }
 
