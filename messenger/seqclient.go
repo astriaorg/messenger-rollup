@@ -110,6 +110,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 	} else if resp.Code != 0 {
 		return nil, fmt.Errorf("unexpected error code: %d", resp.Code)
 	}
+	sc.nonce++
 
 	return resp, nil
 }

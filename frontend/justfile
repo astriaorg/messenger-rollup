@@ -1,0 +1,2 @@
+install:
+  npm install --prefer-offline --no-audit --no-update-notifier --legacy-peer-deps

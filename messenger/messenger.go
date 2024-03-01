@@ -12,21 +12,31 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 
 	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/rs/cors"
 	"google.golang.org/grpc"
 )
 
+var wsUpgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all connections
+	},
+}
+
 type Config struct {
-	SequencerRPC string `env:"SEQUENCER_RPC, default=http://localhost:26657"`
-	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
-	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
-	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
-	RollupID     string `env:"ROLLUP_ID, default=messenger-rollup"`
-	SeqPrivate   string `env:"SEQUENCER_PRIVATE, default="`
+	SequencerRPC string `env:"SEQUENCER_RPC, required"`
+	ConductorRPC string `env:"CONDUCTOR_RPC, required"`
+	RESTApiPort  string `env:"RESTAPI_PORT, required"`
+	RollupName   string `env:"ROLLUP_NAME, required"`
+	SeqPrivate   string `env:"SEQUENCER_PRIVATE, required"`
 }
 
 // App is the main application struct, containing all the necessary components.
@@ -39,12 +49,16 @@ type App struct {
 	messenger       *Messenger
 	rollupName      string
 	rollupID        []byte
+	newBlockChan    chan Block
+	wsClients       WSClientList
+	sync.RWMutex
 }
 
 func NewApp(cfg Config) *App {
 	log.Debugf("Creating new messenger app with config: %v", cfg)
 
-	m := NewMessenger()
+	newBlockChan := make(chan Block, 20)
+	m := NewMessenger(newBlockChan)
 	router := mux.NewRouter()
 
 	rollupID := sha256.Sum256([]byte(cfg.RollupName))
@@ -65,6 +79,8 @@ func NewApp(cfg Config) *App {
 		messenger:       m,
 		rollupName:      cfg.RollupName,
 		rollupID:        rollupID[:],
+		newBlockChan:    newBlockChan,
+		wsClients:       make(WSClientList),
 	}
 }
 
@@ -77,13 +93,15 @@ func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
 func (a *App) setupRestRoutes() {
 	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
 	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
+	a.restRouter.HandleFunc("/recent", a.getRecentMessages).Methods("GET")
+	a.restRouter.HandleFunc("/ws", a.serveWS)
 }
 
 // makeRestServer creates a new HTTP server for the REST API.
 func (a *App) makeRestServer() *http.Server {
 	return &http.Server{
 		Addr:    a.restAddr,
-		Handler: a.restRouter,
+		Handler: cors.Default().Handler(a.restRouter),
 	}
 }
 
@@ -120,6 +138,33 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	w.Write(blockJson)
 }
 
+func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
+	var messages []Transaction
+	for i := len(a.messenger.Blocks); i > 0; i-- {
+		block := a.messenger.Blocks[i-1]
+		if len(block.Txs) > 0 {
+			messages = append(block.Txs, messages...)
+			if len(messages) >= 100 {
+				break
+			}
+		}
+	}
+
+	// keep only the most recent 100
+	if len(messages) > 100 {
+		messages = messages[len(messages)-100:]
+	}
+
+	messagesJson, err := json.Marshal(messages)
+	if err != nil {
+		log.Errorf("error marshalling messages: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(messagesJson)
+}
+
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	var tx Transaction
 	err := json.NewDecoder(r.Body).Decode(&tx)
@@ -135,6 +180,36 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.WithField("responseCode", resp.Code).Debug("transaction submission result")
+}
+
+func (a *App) serveWS(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Errorf("Failed to upgrade HTTP to WebSocket: %v", err)
+		return
+	}
+
+	client := NewWSClient(conn, a)
+	a.addWSClient(client)
+	go client.WaitForMessages()
+	log.Debug("new ws client connected")
+}
+
+func (a *App) addWSClient(client *WSClient) {
+	a.Lock()
+	defer a.Unlock()
+	a.wsClients[client] = true
+}
+
+func (a *App) removeWSClient(client *WSClient) {
+	a.Lock()
+	defer a.Unlock()
+	if _, ok := a.wsClients[client]; ok {
+		// close connection
+		client.conn.Close()
+		// remove
+		delete(a.wsClients, client)
+	}
 }
 
 func (a *App) Run() {
@@ -163,6 +238,30 @@ func (a *App) Run() {
 			log.Warnf("rest api server closed\n")
 		} else if err != nil {
 			log.Errorf("error listening for rest api server: %s\n", err)
+		}
+	}()
+
+	// send new messages to all connected ws clients
+	go func() {
+		for block := range a.newBlockChan {
+			// only write blocks with transactions
+			if len(block.Txs) == 0 {
+				continue
+			}
+
+			txsJson, err := json.Marshal(block.Txs)
+			log.Debugf("marshalled txsJson: %s", txsJson)
+			if err != nil {
+				log.Errorf("Failed to marshal transactions: %v", err)
+			} else {
+				for client := range a.wsClients {
+					select {
+					case client.egress <- txsJson:
+					default:
+						log.Warnf("Could not send transactions to ws client: %s", txsJson)
+					}
+				}
+			}
 		}
 	}()
 

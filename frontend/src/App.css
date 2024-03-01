@@ -42,6 +42,7 @@
 }
 
 .message-list {
+  min-height: 500px;
   max-height: 500px;
   overflow-y: auto;
   display: flex;
@@ -77,6 +78,63 @@
   max-width: 800px;
   margin: auto;
   padding: 20px;
+}
+
+.footer {
+  margin-top: 3rem;
+}
+
+.footer i {
+  margin: 0 2rem;
+}
+
+.nes-balloon {
+  padding: 0.5rem 1rem !important;
+}
+
+.nes-kirby {
+  width: 48px;
+  height: 48px;
+}
+
+.nes-mario {
+  width: 42px;
+  height: 48px;
+}
+
+.nes-pokeball {
+  width: 42px;
+  height: 42px;
+}
+
+.nes-ash {
+  width: 42px;
+  height: 45px;
+}
+
+.nes-bulbasaur {
+  width: 60px;
+  height: 51px;
+}
+
+.nes-charmander {
+  width: 63px;
+  height: 54px;
+}
+
+.nes-squirtle {
+  width: 63px;
+  height: 51px;
+}
+
+.nes-mario::before,
+.nes-ash::before,
+.nes-pokeball::before,
+.nes-bulbasaur::before,
+.nes-charmander::before,
+.nes-squirtle::before,
+.nes-kirby::before {
+  zoom: 0.5;
 }
 
 @media screen and (max-width: 800px) {

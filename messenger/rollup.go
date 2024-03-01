@@ -15,9 +15,8 @@ import (
 
 // Transaction represents a transaction in the blockchain.
 type Transaction struct {
-	Sender   string `json:"sender"`
-	Message  string `json:"message"`
-	Priority uint32 `json:"priority"`
+	Sender  string `json:"sender"`
+	Message string `json:"message"`
 }
 
 func HashTxs(txs []Transaction) ([32]byte, error) {
@@ -93,16 +92,18 @@ func GenesisBlock() Block {
 
 // Messenger is a struct that manages the blocks in the blockchain.
 type Messenger struct {
-	Blocks []Block
-	soft   uint32
-	firm   uint32
+	Blocks       []Block
+	soft         uint32
+	firm         uint32
+	NewBlockChan chan Block
 }
 
-func NewMessenger() *Messenger {
+func NewMessenger(newBlockChan chan Block) *Messenger {
 	return &Messenger{
-		Blocks: []Block{GenesisBlock()},
-		soft:   0,
-		firm:   0,
+		Blocks:       []Block{GenesisBlock()},
+		soft:         0,
+		firm:         0,
+		NewBlockChan: newBlockChan,
 	}
 }
 
@@ -130,4 +131,16 @@ func (m *Messenger) GetLatestBlock() *Block {
 
 func (m *Messenger) Height() uint32 {
 	return uint32(len(m.Blocks))
+}
+
+func (m *Messenger) AddBlock(block Block) error {
+	if m.GetLatestBlock().Height > 0 && !bytes.Equal(block.ParentHash[:], m.GetLatestBlock().Hash[:]) {
+		return errors.New("invalid prev block hash")
+	}
+	m.Blocks = append(m.Blocks, block)
+	select {
+	case m.NewBlockChan <- block:
+	default:
+	}
+	return nil
 }

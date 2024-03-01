@@ -98,11 +98,13 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 
 // ExecuteBlock executes a block and adds it to the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
-	log.WithField("prevBlockHash", hex.EncodeToString(req.PrevBlockHash)).Debugf("ExecuteBlock called")
-	// check if the prev block hash matches the current latest block
-	if !bytes.Equal(req.PrevBlockHash, s.m.GetLatestBlock().Hash[:]) {
-		return nil, errors.New("invalid prev block hash")
-	}
+	log.WithFields(
+		log.Fields{
+			"prevBlockHash": hex.EncodeToString(req.PrevBlockHash),
+			"txCount":       len(req.Transactions),
+		},
+	).Debugf("ExecuteBlock called")
+
 	txs := []Transaction{}
 	for _, txBytes := range req.Transactions {
 		tx := &Transaction{}
@@ -118,7 +120,10 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 		).Debug("unmarshalled transaction")
 	}
 	block := NewBlock(req.PrevBlockHash, uint32(len(s.m.Blocks)), txs, req.Timestamp.AsTime())
-	s.m.Blocks = append(s.m.Blocks, block)
+	err := s.m.AddBlock(block)
+	if err != nil {
+		return nil, err
+	}
 
 	blockPb, err := block.ToPb()
 	if err != nil {
