@@ -88,6 +88,31 @@
   margin: 0 2rem;
 }
 
+.nes-balloon {
+  padding: 0.5rem 1rem !important;
+}
+
+.nes-mario,
+.nes-ash,
+.nes-pokeball,
+.nes-bulbasaur,
+.nes-charmander,
+.nes-squirtle,
+.nes-kirby {
+  width: 48px;
+  height: 48px;
+}
+
+.nes-mario::before,
+.nes-ash::before,
+.nes-pokeball::before,
+.nes-bulbasaur::before,
+.nes-charmander::before,
+.nes-squirtle::before,
+.nes-kirby::before {
+  zoom: 0.5;
+}
+
 @media screen and (max-width: 800px) {
   .nes-container {
     width: 100%;
