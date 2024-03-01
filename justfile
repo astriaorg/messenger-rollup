@@ -11,6 +11,12 @@ run:
     clear
     go run main.go
 
+send-message:
+    curl -X POST -H \
+        "Content-Type: application/json" -d \
+        '{"sender": "just-cli-user", "message": "hello, rollup"}' \
+        localhost:8080/message
+
 docker-reset:
     ./docker-compose/reset.sh
 
