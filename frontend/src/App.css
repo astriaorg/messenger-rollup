@@ -92,15 +92,39 @@
   padding: 0.5rem 1rem !important;
 }
 
-.nes-mario,
-.nes-ash,
-.nes-pokeball,
-.nes-bulbasaur,
-.nes-charmander,
-.nes-squirtle,
 .nes-kirby {
   width: 48px;
   height: 48px;
+}
+
+.nes-mario {
+  width: 42px;
+  height: 48px;
+}
+
+.nes-pokeball {
+  width: 42px;
+  height: 42px;
+}
+
+.nes-ash {
+  width: 42px;
+  height: 45px;
+}
+
+.nes-bulbasaur {
+  width: 60px;
+  height: 51px;
+}
+
+.nes-charmander {
+  width: 63px;
+  height: 54px;
+}
+
+.nes-squirtle {
+  width: 63px;
+  height: 51px;
 }
 
 .nes-mario::before,
