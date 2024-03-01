@@ -32,12 +32,11 @@ var wsUpgrader = websocket.Upgrader{
 }
 
 type Config struct {
-	SequencerRPC string `env:"SEQUENCER_RPC, default=http://localhost:26657"`
-	ConductorRPC string `env:"CONDUCTOR_RPC, default=:50051"`
-	RESTApiPort  string `env:"RESTAPI_PORT, default=:8080"`
-	RollupName   string `env:"ROLLUP_NAME, default=messenger-rollup"`
-	RollupID     string `env:"ROLLUP_ID, default=messenger-rollup"`
-	SeqPrivate   string `env:"SEQUENCER_PRIVATE, default=00fd4d6af5ac34d29d63a04ecf7da1ccfcbcdf7f7ed4042b8975e1c54e96d685"`
+	SequencerRPC string `env:"SEQUENCER_RPC, required"`
+	ConductorRPC string `env:"CONDUCTOR_RPC, required"`
+	RESTApiPort  string `env:"RESTAPI_PORT, required"`
+	RollupName   string `env:"ROLLUP_NAME, required"`
+	SeqPrivate   string `env:"SEQUENCER_PRIVATE, required"`
 }
 
 // App is the main application struct, containing all the necessary components.

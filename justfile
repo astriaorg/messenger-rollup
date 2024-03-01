@@ -9,6 +9,7 @@ rebuild:
 
 run:
     clear
+    source .env
     go run main.go
 
 send-message:
