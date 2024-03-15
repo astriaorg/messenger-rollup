@@ -24,19 +24,19 @@ func encodeTx(tx Transaction) ([]byte, error) {
 	data, err := json.Marshal(tx)
 	if err != nil {
 		log.Errorf("error encoding transaction: %s\n", err)
-		return data, err
+		return nil, err
 	}
 	return data, nil
 }
 
 // decode transaction from bytes back into rollup format
-func decodeTx(txEncoded []byte) (Transaction, error) {
+func decodeTx(txEncoded []byte) (*Transaction, error) {
 	tx := &Transaction{}
 	if err := json.Unmarshal(txEncoded, tx); err != nil {
 		log.Errorf("error decoding transaction: %s\n", err)
-		return *tx, err
+		return nil, err
 	}
-	return *tx, nil
+	return tx, nil
 }
 
 // create starting block for this rollup
@@ -95,7 +95,7 @@ func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
 					log.Errorf("tried to decode malformed message: %s\n", err)
 					continue
 				}
-				messages = append(messages, tx)
+				messages = append(messages, *tx)
 			}
 			if len(messages) >= 100 {
 				break
@@ -119,7 +119,7 @@ func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
 }
 
 func prepareBlockForClient(blockTxs [][]byte) []byte {
-	// re-encode messages as json for front end
+	// recode messages as json for front end
 	transactions := []Transaction{}
 	for _, encodedTx := range blockTxs {
 		decodedTx, err := decodeTx(encodedTx)
@@ -127,7 +127,7 @@ func prepareBlockForClient(blockTxs [][]byte) []byte {
 			log.Errorf("error decoding tx in block: %v, error: %s\n", encodedTx, err)
 			continue
 		}
-		transactions = append(transactions, decodedTx)
+		transactions = append(transactions, *decodedTx)
 	}
 
 	// only write blocks with valid transactions
