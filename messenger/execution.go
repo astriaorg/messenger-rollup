@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 
 	log "github.com/sirupsen/logrus"
@@ -16,15 +15,15 @@ import (
 // ExecutionServiceServerV1Alpha2 is a server that implements the ExecutionServiceServer interface.
 type ExecutionServiceServerV1Alpha2 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
-	m        *Messenger
-	rollupID []byte
+	rollupBlocks *RollupBlocks
+	rollupID     []byte
 }
 
 // NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
-func NewExecutionServiceServerV1Alpha2(m *Messenger, rollupID []byte) *ExecutionServiceServerV1Alpha2 {
+func NewExecutionServiceServerV1Alpha2(rollupBlocks *RollupBlocks, rollupID []byte) *ExecutionServiceServerV1Alpha2 {
 	return &ExecutionServiceServerV1Alpha2{
-		m:        m,
-		rollupID: rollupID,
+		rollupBlocks: rollupBlocks,
+		rollupID:     rollupID,
 	}
 }
 
@@ -49,7 +48,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astr
 	).Debug("GetBlock called")
 	switch req.Identifier.Identifier.(type) {
 	case *astriaPb.BlockIdentifier_BlockNumber:
-		block, err := s.m.GetSingleBlock(uint32(req.Identifier.GetBlockNumber()))
+		block, err := s.rollupBlocks.GetSingleBlock(uint32(req.Identifier.GetBlockNumber()))
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +79,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 		switch id.Identifier.(type) {
 		case *astriaPb.BlockIdentifier_BlockNumber:
 			height := uint32(id.GetBlockNumber())
-			block, err := s.m.GetSingleBlock(height)
+			block, err := s.rollupBlocks.GetSingleBlock(height)
 			if err != nil {
 				return nil, err
 			}
@@ -104,23 +103,8 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 			"txCount":       len(req.Transactions),
 		},
 	).Debugf("ExecuteBlock called")
-
-	txs := []Transaction{}
-	for _, txBytes := range req.Transactions {
-		tx := &Transaction{}
-		if err := json.Unmarshal(txBytes, tx); err != nil {
-			return nil, errors.New("failed to unmarshal transaction")
-		}
-		txs = append(txs, *tx)
-		log.WithFields(
-			log.Fields{
-				"sender":  tx.Sender,
-				"message": tx.Message,
-			},
-		).Debug("unmarshalled transaction")
-	}
-	block := NewBlock(req.PrevBlockHash, uint32(len(s.m.Blocks)), txs, req.Timestamp.AsTime())
-	err := s.m.AddBlock(block)
+	block := NewBlock(req.PrevBlockHash, uint32(len(s.rollupBlocks.Blocks)), req.Transactions, req.Timestamp.AsTime())
+	err := s.rollupBlocks.AddBlock(block)
 	if err != nil {
 		return nil, err
 	}
@@ -137,11 +121,11 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 // GetCommitmentState retrieves the current commitment state of the blockchain.
 func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
 	log.Debug("GetCommitmentState called")
-	soft, err := s.m.GetSoftBlock().ToPb()
+	soft, err := s.rollupBlocks.GetSoftBlock().ToPb()
 	if err != nil {
 		return nil, err
 	}
-	firm, err := s.m.GetFirmBlock().ToPb()
+	firm, err := s.rollupBlocks.GetFirmBlock().ToPb()
 	if err != nil {
 		return nil, err
 	}
@@ -174,11 +158,11 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 	firmHeight := req.CommitmentState.Firm.Number
 
 	// get the actual soft and firm blocks
-	firmBlock, err := s.m.GetSingleBlock(firmHeight)
+	firmBlock, err := s.rollupBlocks.GetSingleBlock(firmHeight)
 	if err != nil {
 		return nil, err
 	}
-	softBlock, err := s.m.GetSingleBlock(softHeight)
+	softBlock, err := s.rollupBlocks.GetSingleBlock(softHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -192,13 +176,13 @@ func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Conte
 	}
 
 	// update the commitment state
-	s.m.soft = softHeight
-	s.m.firm = firmHeight
+	s.rollupBlocks.soft = softHeight
+	s.rollupBlocks.firm = firmHeight
 
 	log.WithFields(
 		log.Fields{
-			"soft": s.m.soft,
-			"firm": s.m.firm,
+			"soft": s.rollupBlocks.soft,
+			"firm": s.rollupBlocks.firm,
 		},
 	).Debugf("UpdateCommitmentState completed")
 	return req.CommitmentState, nil

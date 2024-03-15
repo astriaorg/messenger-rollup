@@ -39,6 +39,12 @@ type Config struct {
 	SeqPrivate   string `env:"SEQUENCER_PRIVATE, required"`
 }
 
+// Transaction represents a transaction in the blockchain.
+type Transaction struct {
+	Sender  string `json:"sender"`
+	Message string `json:"message"`
+}
+
 // App is the main application struct, containing all the necessary components.
 type App struct {
 	executionRPC    string
@@ -46,7 +52,7 @@ type App struct {
 	sequencerClient SequencerClient
 	restRouter      *mux.Router
 	restAddr        string
-	messenger       *Messenger
+	rollupBlocks    *RollupBlocks
 	rollupName      string
 	rollupID        []byte
 	newBlockChan    chan Block
@@ -54,11 +60,43 @@ type App struct {
 	sync.RWMutex
 }
 
+func encodeTx(tx Transaction) ([]byte, error) {
+	// encode transaction to send to sequencer
+	data, err := json.Marshal(tx)
+	if err != nil {
+		log.Errorf("error encoding transaction: %s\n", err)
+		return data, err
+	}
+	return data, nil
+}
+
+func decodeTx(txEncoded []byte) (Transaction, error) {
+	tx := &Transaction{}
+	if err := json.Unmarshal(txEncoded, tx); err != nil {
+		log.Errorf("error decoding transaction: %s\n", err)
+		return *tx, err
+	}
+	return *tx, nil
+}
+
+func GenesisTransaction() []byte {
+	genesisTx := Transaction{
+		Sender:  "astria",
+		Message: "hello, world!",
+	}
+	encodedTx, err := encodeTx(genesisTx)
+	if err != nil {
+		log.Errorf("error encoding genesis tx: %s\n", err)
+		panic(err)
+	}
+	return encodedTx
+}
+
 func NewApp(cfg Config) *App {
 	log.Debugf("Creating new messenger app with config: %v", cfg)
 
 	newBlockChan := make(chan Block, 20)
-	m := NewMessenger(newBlockChan)
+	rollupBlocks := NewRollupBlocks(newBlockChan)
 	router := mux.NewRouter()
 
 	rollupID := sha256.Sum256([]byte(cfg.RollupName))
@@ -76,7 +114,7 @@ func NewApp(cfg Config) *App {
 		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupID[:], private),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
-		messenger:       m,
+		rollupBlocks:    rollupBlocks,
 		rollupName:      cfg.RollupName,
 		rollupID:        rollupID[:],
 		newBlockChan:    newBlockChan,
@@ -86,7 +124,7 @@ func NewApp(cfg Config) *App {
 
 // makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
-	return NewExecutionServiceServerV1Alpha2(a.messenger, a.rollupID)
+	return NewExecutionServiceServerV1Alpha2(a.rollupBlocks, a.rollupID)
 }
 
 // setupRestRoutes sets up the routes for the REST API.
@@ -121,7 +159,7 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debugf("getting block %d\n", height)
-	block, err := a.messenger.GetSingleBlock(uint32(height))
+	block, err := a.rollupBlocks.GetSingleBlock(uint32(height))
 	if err != nil {
 		log.Errorf("error getting block: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -140,10 +178,19 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
 	var messages []Transaction
-	for i := len(a.messenger.Blocks); i > 0; i-- {
-		block := a.messenger.Blocks[i-1]
+	for i := len(a.rollupBlocks.Blocks); i > 0; i-- {
+		block := a.rollupBlocks.Blocks[i-1]
 		if len(block.Txs) > 0 {
-			messages = append(block.Txs, messages...)
+			log.Infof("block txs: %v", block.Txs)
+			for _, txRaw := range block.Txs {
+				log.Infof("raw txn: %v", txRaw)
+				tx, err := decodeTx(txRaw)
+				if err != nil {
+					log.Errorf("tried to decode malformed message: %s\n", err)
+					continue
+				}
+				messages = append(messages, tx)
+			}
 			if len(messages) >= 100 {
 				break
 			}
@@ -167,13 +214,22 @@ func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
 
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	var tx Transaction
+	// decode transaction to ensure proper format
 	err := json.NewDecoder(r.Body).Decode(&tx)
 	if err != nil {
 		log.Errorf("error decoding transaction: %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	resp, err := a.sequencerClient.SendMessage(tx)
+	log.Infof("'postMessage': tx decoded successfully: %v, ", tx)
+	// recode transaction to send to sequencer
+	txEncoded, err := encodeTx(tx)
+	if err != nil {
+		log.Errorf("error re-encoding transaction: %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	resp, err := a.sequencerClient.SendMessage(txEncoded)
 	if err != nil {
 		log.Errorf("error sending message: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -248,8 +304,24 @@ func (a *App) Run() {
 			if len(block.Txs) == 0 {
 				continue
 			}
+			// re-encode messages as json for front end
+			transactions := []Transaction{}
+			for _, encodedTx := range block.Txs {
+				decodedTx, err := decodeTx(encodedTx)
+				if err != nil {
+					log.Errorf("error decoding tx in block: %v, error: %s\n", encodedTx, err)
+					continue
+				}
+				transactions = append(transactions, decodedTx)
+			}
 
-			txsJson, err := json.Marshal(block.Txs)
+			// only write blocks with valid transactions
+			if len(transactions) == 0 {
+				continue
+			}
+
+			// send transaction encoded format to frontend
+			txsJson, err := json.Marshal(transactions)
 			log.Debugf("marshalled txsJson: %s", txsJson)
 			if err != nil {
 				log.Errorf("Failed to marshal transactions: %v", err)
