@@ -3,7 +3,6 @@ package messenger
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -13,24 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Transaction represents a transaction in the blockchain.
-type Transaction struct {
-	Sender  string `json:"sender"`
-	Message string `json:"message"`
-}
-
-func HashTxs(txs []Transaction) ([32]byte, error) {
-	txBytes := [][]byte{}
-	for _, tx := range txs {
-		if bytes, err := json.Marshal(tx); err != nil {
-			return [32]byte{}, err
-		} else {
-			txBytes = append(txBytes, bytes)
-		}
-	}
-
-	hash := sha256.Sum256(bytes.Join(txBytes, []byte{}))
-
+func HashTxs(txs [][]byte) ([32]byte, error) {
+	hash := sha256.Sum256(bytes.Join(txs, []byte{}))
 	return hash, nil
 }
 
@@ -39,10 +22,10 @@ type Block struct {
 	Hash       [32]byte
 	Height     uint32
 	Timestamp  time.Time
-	Txs        []Transaction
+	Txs        [][]byte
 }
 
-func NewBlock(parentHash []byte, height uint32, txs []Transaction, timestamp time.Time) Block {
+func NewBlock(parentHash []byte, height uint32, txs [][]byte, timestamp time.Time) Block {
 	txHash, err := HashTxs(txs)
 	if err != nil {
 		panic(err)
@@ -68,12 +51,9 @@ func (b *Block) ToPb() (*astriaPb.Block, error) {
 
 // GenesisBlock creates the genesis block.
 func GenesisBlock() Block {
-	helloTx := Transaction{
-		Sender:  "astria",
-		Message: "hello, world!",
-	}
+	genesisTx := GenesisTransaction()
 
-	helloHash, err := HashTxs([]Transaction{helloTx})
+	genesisHash, err := HashTxs([][]byte{genesisTx})
 	if err != nil {
 		log.Errorf("error hashing genesis tx: %s\n", err)
 		panic(err)
@@ -81,25 +61,25 @@ func GenesisBlock() Block {
 
 	return Block{
 		ParentHash: [32]byte{0x00000000},
-		Hash:       helloHash,
+		Hash:       genesisHash,
 		Height:     0,
 		Timestamp:  time.Now(),
-		Txs: []Transaction{
-			helloTx,
+		Txs: [][]byte{
+			genesisTx,
 		},
 	}
 }
 
 // Messenger is a struct that manages the blocks in the blockchain.
-type Messenger struct {
+type RollupBlocks struct {
 	Blocks       []Block
 	soft         uint32
 	firm         uint32
 	NewBlockChan chan Block
 }
 
-func NewMessenger(newBlockChan chan Block) *Messenger {
-	return &Messenger{
+func NewRollupBlocks(newBlockChan chan Block) *RollupBlocks {
+	return &RollupBlocks{
 		Blocks:       []Block{GenesisBlock()},
 		soft:         0,
 		firm:         0,
@@ -109,37 +89,37 @@ func NewMessenger(newBlockChan chan Block) *Messenger {
 
 // GetSingleBlock retrieves a block by its height, failing if the requested
 // height is higher than the current height.
-func (m *Messenger) GetSingleBlock(height uint32) (*Block, error) {
+func (rb *RollupBlocks) GetSingleBlock(height uint32) (*Block, error) {
 	log.Debugf("getting block at height %d\n", height)
-	if height > uint32(len(m.Blocks)) {
+	if height > uint32(len(rb.Blocks)) {
 		return nil, errors.New("block not found")
 	}
-	return &m.Blocks[height], nil
+	return &rb.Blocks[height], nil
 }
 
-func (m *Messenger) GetSoftBlock() *Block {
-	return &m.Blocks[m.soft]
+func (rb *RollupBlocks) GetSoftBlock() *Block {
+	return &rb.Blocks[rb.soft]
 }
 
-func (m *Messenger) GetFirmBlock() *Block {
-	return &m.Blocks[m.firm]
+func (rb *RollupBlocks) GetFirmBlock() *Block {
+	return &rb.Blocks[rb.firm]
 }
 
-func (m *Messenger) GetLatestBlock() *Block {
-	return &m.Blocks[len(m.Blocks)-1]
+func (rb *RollupBlocks) GetLatestBlock() *Block {
+	return &rb.Blocks[len(rb.Blocks)-1]
 }
 
-func (m *Messenger) Height() uint32 {
-	return uint32(len(m.Blocks))
+func (rb *RollupBlocks) Height() uint32 {
+	return uint32(len(rb.Blocks))
 }
 
-func (m *Messenger) AddBlock(block Block) error {
-	if m.GetLatestBlock().Height > 0 && !bytes.Equal(block.ParentHash[:], m.GetLatestBlock().Hash[:]) {
+func (rb *RollupBlocks) AddBlock(block Block) error {
+	if rb.GetLatestBlock().Height > 0 && !bytes.Equal(block.ParentHash[:], rb.GetLatestBlock().Hash[:]) {
 		return errors.New("invalid prev block hash")
 	}
-	m.Blocks = append(m.Blocks, block)
+	rb.Blocks = append(rb.Blocks, block)
 	select {
-	case m.NewBlockChan <- block:
+	case rb.NewBlockChan <- block:
 	default:
 	}
 	return nil

@@ -3,7 +3,6 @@ package messenger
 import (
 	"context"
 	"crypto/ed25519"
-	"encoding/json"
 	"fmt"
 
 	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/sequencer/v1alpha1"
@@ -46,12 +45,8 @@ func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*ten
 }
 
 // SendMessage sends a message as a transaction.
-func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroadcastTx, error) {
+func (sc *SequencerClient) SendMessage(tx []byte) (*tendermintPb.ResultBroadcastTx, error) {
 	log.Debug("sending message")
-	data, err := json.Marshal(tx)
-	if err != nil {
-		return nil, err
-	}
 
 	unsigned := &astriaPb.UnsignedTransaction{
 		Nonce: sc.nonce,
@@ -60,7 +55,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 				Value: &astriaPb.Action_SequenceAction{
 					SequenceAction: &astriaPb.SequenceAction{
 						RollupId: sc.rollupId,
-						Data:     data,
+						Data:     tx,
 					},
 				},
 			},
@@ -72,10 +67,7 @@ func (sc *SequencerClient) SendMessage(tx Transaction) (*tendermintPb.ResultBroa
 		panic(err)
 	}
 
-	log.WithFields(log.Fields{
-		"sender":  tx.Sender,
-		"message": tx.Message,
-	}).Debug("submitting tx to sequencer.")
+	log.Debugf("submitting tx to sequencer: %s.", tx)
 
 	resp, err := sc.broadcastTxSync(signed)
 	if err != nil {

@@ -46,7 +46,7 @@ type App struct {
 	sequencerClient SequencerClient
 	restRouter      *mux.Router
 	restAddr        string
-	messenger       *Messenger
+	rollupBlocks    *RollupBlocks
 	rollupName      string
 	rollupID        []byte
 	newBlockChan    chan Block
@@ -58,7 +58,7 @@ func NewApp(cfg Config) *App {
 	log.Debugf("Creating new messenger app with config: %v", cfg)
 
 	newBlockChan := make(chan Block, 20)
-	m := NewMessenger(newBlockChan)
+	rollupBlocks := NewRollupBlocks(newBlockChan)
 	router := mux.NewRouter()
 
 	rollupID := sha256.Sum256([]byte(cfg.RollupName))
@@ -76,7 +76,7 @@ func NewApp(cfg Config) *App {
 		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupID[:], private),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
-		messenger:       m,
+		rollupBlocks:    rollupBlocks,
 		rollupName:      cfg.RollupName,
 		rollupID:        rollupID[:],
 		newBlockChan:    newBlockChan,
@@ -86,15 +86,14 @@ func NewApp(cfg Config) *App {
 
 // makeExecutionServer creates a new ExecutionServiceServer.
 func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
-	return NewExecutionServiceServerV1Alpha2(a.messenger, a.rollupID)
+	return NewExecutionServiceServerV1Alpha2(a.rollupBlocks, a.rollupID)
 }
 
 // setupRestRoutes sets up the routes for the REST API.
 func (a *App) setupRestRoutes() {
 	a.restRouter.HandleFunc("/block/{height}", a.getBlock).Methods("GET")
-	a.restRouter.HandleFunc("/message", a.postMessage).Methods("POST")
-	a.restRouter.HandleFunc("/recent", a.getRecentMessages).Methods("GET")
 	a.restRouter.HandleFunc("/ws", a.serveWS)
+	registerHandlers(a)
 }
 
 // makeRestServer creates a new HTTP server for the REST API.
@@ -121,7 +120,7 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debugf("getting block %d\n", height)
-	block, err := a.messenger.GetSingleBlock(uint32(height))
+	block, err := a.rollupBlocks.GetSingleBlock(uint32(height))
 	if err != nil {
 		log.Errorf("error getting block: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -136,50 +135,6 @@ func (a *App) getBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(blockJson)
-}
-
-func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
-	var messages []Transaction
-	for i := len(a.messenger.Blocks); i > 0; i-- {
-		block := a.messenger.Blocks[i-1]
-		if len(block.Txs) > 0 {
-			messages = append(block.Txs, messages...)
-			if len(messages) >= 100 {
-				break
-			}
-		}
-	}
-
-	// keep only the most recent 100
-	if len(messages) > 100 {
-		messages = messages[len(messages)-100:]
-	}
-
-	messagesJson, err := json.Marshal(messages)
-	if err != nil {
-		log.Errorf("error marshalling messages: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(messagesJson)
-}
-
-func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
-	var tx Transaction
-	err := json.NewDecoder(r.Body).Decode(&tx)
-	if err != nil {
-		log.Errorf("error decoding transaction: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	resp, err := a.sequencerClient.SendMessage(tx)
-	if err != nil {
-		log.Errorf("error sending message: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	log.WithField("responseCode", resp.Code).Debug("transaction submission result")
 }
 
 func (a *App) serveWS(w http.ResponseWriter, r *http.Request) {
@@ -249,17 +204,18 @@ func (a *App) Run() {
 				continue
 			}
 
-			txsJson, err := json.Marshal(block.Txs)
-			log.Debugf("marshalled txsJson: %s", txsJson)
-			if err != nil {
-				log.Errorf("Failed to marshal transactions: %v", err)
-			} else {
-				for client := range a.wsClients {
-					select {
-					case client.egress <- txsJson:
-					default:
-						log.Warnf("Could not send transactions to ws client: %s", txsJson)
-					}
+			// decode transactions into format that the client can handle
+			txsJson := prepareBlockForClient(block.Txs)
+
+			if len(block.Txs) == 0 {
+				log.Info("post txs filtering no txs remaining")
+				continue
+			}
+			for client := range a.wsClients {
+				select {
+				case client.egress <- txsJson:
+				default:
+					log.Warnf("Could not send transactions to ws client: %s", txsJson)
 				}
 			}
 		}
