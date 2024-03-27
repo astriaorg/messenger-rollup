@@ -103,7 +103,18 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 			"txCount":       len(req.Transactions),
 		},
 	).Debugf("ExecuteBlock called")
-	block := NewBlock(req.PrevBlockHash, uint32(len(s.rollupBlocks.Blocks)), req.Transactions, req.Timestamp.AsTime())
+
+	// Filter out any Deposit txs since we don't currently support them
+	txsToProcess := [][]byte{}
+	for idx, tx := range req.Transactions {
+		if tx.GetDeposit() != nil {
+			log.Info("Deposit transactions detected, not implemented for chain, skipping", "index", idx)
+		} else {
+			txsToProcess = append(txsToProcess, tx.GetSequencedData())
+		}
+	}
+
+	block := NewBlock(req.PrevBlockHash, uint32(len(s.rollupBlocks.Blocks)), txsToProcess, req.Timestamp.AsTime())
 	err := s.rollupBlocks.AddBlock(block)
 	if err != nil {
 		return nil, err
