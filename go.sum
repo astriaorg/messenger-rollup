@@ -1,5 +1,5 @@
-buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240215175137-9570e0c3082f.1 h1:J2y85BwNSx4IWCpYIokBnqWMRidiNyefiCdZRWsf7/4=
-buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240215175137-9570e0c3082f.1/go.mod h1:HTIae3hIWhV69v7f8BJQzr2tP6yd0/gxwLrMiG306RY=
+buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240307175025-b24dec4bdce2.1 h1:exzc+JJVSVL3CaEgYJGnRQ9TvZjhM/CZt/UtoFvDDMw=
+buf.build/gen/go/astria/astria/protocolbuffers/go v1.32.0-20240307175025-b24dec4bdce2.1/go.mod h1:HTIae3hIWhV69v7f8BJQzr2tP6yd0/gxwLrMiG306RY=
 buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240209225522-97e3bc68f856.2 h1:mK0jVG2+QlJrPKsgL46KKh2ZqHc8lyexQP3TUcOvvNU=
 buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240209225522-97e3bc68f856.2/go.mod h1:soA8k5qokjmp9DmV6jdcWndlVdSYjfa8KJZgsJrvixc=
 buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.28.1-20240209225522-97e3bc68f856.4/go.mod h1:5wxRDkWimPnuhDUA4pFBaHMtrViNJAHguLU1Wq8T6x8=
@@ -413,8 +413,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
-github.com/astriaorg/go-sequencer-client v0.0.0-20240221205626-cf1140289aa1 h1:NxOOSLbfWOIsqonS+xR4nR97tPyb7Xh1nRdY/vUk1MQ=
-github.com/astriaorg/go-sequencer-client v0.0.0-20240221205626-cf1140289aa1/go.mod h1:PmewAlRfMU1lKcNnsUnsKrghKyayaGw2foXfnUTllFU=
+github.com/astriaorg/go-sequencer-client v0.2.0-alpha.2 h1:QJiuR4+ExAxkQqYVu6G5iLcEIKrMeJYstkB6RFv8h8w=
+github.com/astriaorg/go-sequencer-client v0.2.0-alpha.2/go.mod h1:ohQGxNVdgqb4kFRn4sZphSwUtI7q8dcrARwXpN5y+kY=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
@@ -1236,6 +1236,10 @@ google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6/go.mod h1:rZS5c/ZV
 google.golang.org/genproto v0.0.0-20221201164419-0e50fba7f41c/go.mod h1:rZS5c/ZVYMaOGBfO68GWtjOw/eLaZM1X6iVtgjZ+EWg=
 google.golang.org/genproto v0.0.0-20221202195650-67e5cbc046fd/go.mod h1:cTsE614GARnxrLsqKREzmNYJACSWWpAWdNMwnD7c2BE=
 google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f/go.mod h1:RGgjbofJ8xD9Sq1VVhDM1Vok1vRONV+rg+CjzG4SZKM=
+google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97 h1:SeZZZx0cP0fqUyA+oRzP9k7cSwJlvDFiROO72uwD6i0=
+google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97/go.mod h1:t1VqOqqvce95G3hIDCT5FeO3YUc6Q4Oe24L/+rNMxRk=
+google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 h1:W18sezcAYs+3tDZX4F80yctqa12jcP1PUS2gQu1zTPU=
+google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97/go.mod h1:iargEX0SFPm3xcfMI0d1domjg0ZF4Aa0p2awqyxhvF0=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97 h1:6GQBEOdGkX6MMTLT9V+TjtIRZCw9VPD5Z+yHY9wMgS0=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97/go.mod h1:v7nGkzlmW8P3n/bKmWBn2WpBjpOEx8Q6gMueudAmKfY=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
