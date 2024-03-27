@@ -46,8 +46,14 @@ services:
       rollup:
         condition: service_started
       cometbft:
-        condition: service_started
+        condition: service_healthy
   cometbft:
+    healthcheck:
+        test: ["CMD-SHELL", "curl -f http://127.0.0.1:26657/health || exit 1"]
+        interval: 10s
+        retries: 3
+        start_period: 5s
+        timeout: 5s
     image: docker.io/cometbft/cometbft:v0.37.x
     environment:
       COMET_BFT_RPC_PORT: 26657
