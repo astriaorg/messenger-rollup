@@ -1,9 +1,11 @@
 # Example Messenger Rollup
-Set up Execution API dependencies (protobufs and gRPC):
+Set up Execution API and Composer API dependencies (protobufs and gRPC):
 
 ```bash
 go get buf.build/gen/go/astria/execution-apis/grpc/go
 go get buf.build/gen/go/astria/execution-apis/protocolbuffers/go
+go get buf.build/gen/go/astria/composer-apis/grpc/go
+go get buf.build/gen/go/astria/composer-apis/protocolbuffers/go
 ```
 
 Set up Sequencer Client and Tendermint RPC types dependencies:

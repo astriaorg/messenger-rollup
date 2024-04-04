@@ -1,11 +1,15 @@
 package messenger
 
 import (
+	"buf.build/gen/go/astria/composer-apis/grpc/go/astria/composer/v1alpha1/composerv1alpha1grpc"
 	"context"
 	"crypto/ed25519"
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/sequencer/v1"
+	astriaComposerPb "buf.build/gen/go/astria/composer-apis/protocolbuffers/go/astria/composer/v1alpha1"
 	client "github.com/astriaorg/go-sequencer-client/client"
 	tendermintPb "github.com/cometbft/cometbft/rpc/core/types"
 
@@ -14,14 +18,15 @@ import (
 
 // SequencerClient is a client for interacting with the sequencer.
 type SequencerClient struct {
-	c        *client.Client
-	signer   *client.Signer
-	nonce    uint32
-	rollupId []byte
+	c              *client.Client
+	composerClient *grpc.ClientConn
+	signer         *client.Signer
+	nonce          uint32
+	rollupId       []byte
 }
 
 // NewSequencerClient creates a new SequencerClient.
-func NewSequencerClient(sequencerAddr string, rollupId []byte, private ed25519.PrivateKey) *SequencerClient {
+func NewSequencerClient(sequencerAddr string, composerAddr string, rollupId []byte, private ed25519.PrivateKey) *SequencerClient {
 	log.Debug("creating new sequencer client")
 	signer := client.NewSigner(private)
 
@@ -31,10 +36,16 @@ func NewSequencerClient(sequencerAddr string, rollupId []byte, private ed25519.P
 		panic(err)
 	}
 
+	conn, err := grpc.Dial(composerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+
 	return &SequencerClient{
-		c:        c,
-		signer:   signer,
-		rollupId: rollupId,
+		c:              c,
+		composerClient: conn,
+		signer:         signer,
+		rollupId:       rollupId,
 	}
 }
 
@@ -42,6 +53,20 @@ func NewSequencerClient(sequencerAddr string, rollupId []byte, private ed25519.P
 func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*tendermintPb.ResultBroadcastTx, error) {
 	log.Debug("broadcasting tx")
 	return sc.c.BroadcastTxSync(context.Background(), tx)
+}
+
+func (sc *SequencerClient) SendMessageViaComposer(tx []byte) error {
+	grpcCollectorServiceClient := composerv1alpha1grpc.NewGrpcCollectorServiceClient(sc.composerClient)
+	// if the request succeeds, then an empty response will be returned which can be ignored for now
+	_, err := grpcCollectorServiceClient.SubmitRollupTransaction(context.Background(), &astriaComposerPb.SubmitRollupTransactionRequest{
+		RollupId: sc.rollupId,
+		Data:     tx,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SendMessage sends a message as a transaction.

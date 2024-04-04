@@ -34,6 +34,7 @@ var wsUpgrader = websocket.Upgrader{
 type Config struct {
 	SequencerRPC string `env:"SEQUENCER_RPC, required"`
 	ConductorRPC string `env:"CONDUCTOR_RPC, required"`
+	ComposerRpc  string `env:"COMPOSER_RPC, required"`
 	RESTApiPort  string `env:"RESTAPI_PORT, required"`
 	RollupName   string `env:"ROLLUP_NAME, required"`
 	SeqPrivate   string `env:"SEQUENCER_PRIVATE, required"`
@@ -73,7 +74,7 @@ func NewApp(cfg Config) *App {
 	return &App{
 		executionRPC:    cfg.ConductorRPC,
 		sequencerRPC:    cfg.SequencerRPC,
-		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, rollupID[:], private),
+		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, cfg.ComposerRpc, rollupID[:], private),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
 		rollupBlocks:    rollupBlocks,
