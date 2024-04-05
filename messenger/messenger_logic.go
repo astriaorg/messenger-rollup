@@ -79,7 +79,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Infof("succesfully sent transaction to composer")
+	log.WithField("result", "success").Debug("transaction submission result")
 }
 
 func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
