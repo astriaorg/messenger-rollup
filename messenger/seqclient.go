@@ -27,7 +27,6 @@ type SequencerClient struct {
 
 // NewSequencerClient creates a new SequencerClient.
 func NewSequencerClient(sequencerAddr string, composerAddr string, rollupId []byte, private ed25519.PrivateKey) *SequencerClient {
-	log.Debug("creating new sequencer client")
 	signer := client.NewSigner(private)
 
 	// default tendermint RPC endpoint
@@ -56,6 +55,8 @@ func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*ten
 }
 
 func (sc *SequencerClient) SendMessageViaComposer(tx []byte) error {
+	log.Debug("broadcasting tx through composer!")
+
 	grpcCollectorServiceClient := composerv1alpha1grpc.NewGrpcCollectorServiceClient(sc.composerClient)
 	// if the request succeeds, then an empty response will be returned which can be ignored for now
 	_, err := grpcCollectorServiceClient.SubmitRollupTransaction(context.Background(), &astriaComposerPb.SubmitRollupTransactionRequest{

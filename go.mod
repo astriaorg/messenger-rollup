@@ -3,11 +3,11 @@ module github.com/astriaorg/messenger-rollup
 go 1.21.3
 
 require (
-	buf.build/gen/go/astria/astria/protocolbuffers/go v1.33.0-20240314225002-310b29d1ef86.1
+	buf.build/gen/go/astria/astria/protocolbuffers/go v1.33.0-20240403190008-c770a4039013.1
 	buf.build/gen/go/astria/composer-apis/grpc/go v1.3.0-20240329163554-64ef75007d48.2
 	buf.build/gen/go/astria/composer-apis/protocolbuffers/go v1.33.0-20240329163554-64ef75007d48.1
-	buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240314225003-19f6b40c3e7b.2
-	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.33.0-20240314225003-19f6b40c3e7b.1
+	buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240403190013-330a3ad19591.2
+	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.33.0-20240403190013-330a3ad19591.1
 	github.com/astriaorg/go-sequencer-client v0.2.0-alpha.2.0.20240319201724-8dfc0ed60f1b
 	github.com/cometbft/cometbft v0.38.6
 	github.com/gorilla/mux v1.8.1
