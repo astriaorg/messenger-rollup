@@ -1,9 +1,11 @@
 # Example Messenger Rollup
-Set up Execution API dependencies (protobufs and gRPC):
+Set up Execution API and Composer API dependencies (protobufs and gRPC):
 
 ```bash
 go get buf.build/gen/go/astria/execution-apis/grpc/go
 go get buf.build/gen/go/astria/execution-apis/protocolbuffers/go
+go get buf.build/gen/go/astria/composer-apis/grpc/go
+go get buf.build/gen/go/astria/composer-apis/protocolbuffers/go
 ```
 
 Set up Sequencer Client and Tendermint RPC types dependencies:
@@ -19,6 +21,9 @@ just docker-run
 ```
 
 This will launch a local sequencer, conductor, the rollup, and the chat frontend.
+
+Note that conductor and composer might take 1-2s to come up since they depend on the rollup and the cometbft instance
+to come up.
 
 ### Reset rollup data
 

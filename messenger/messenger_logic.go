@@ -73,13 +73,13 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send transaction to the sequencer
-	resp, err := a.sequencerClient.SendMessage(txEncoded)
+	err = a.sequencerClient.SendMessageViaComposer(txEncoded)
 	if err != nil {
 		log.Errorf("error sending message: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.WithField("responseCode", resp.Code).Debug("transaction submission result")
+	log.WithField("result", "success").Debug("transaction submission result")
 }
 
 func (a *App) getRecentMessages(w http.ResponseWriter, _ *http.Request) {
