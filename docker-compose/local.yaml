@@ -53,6 +53,7 @@ services:
       ASTRIA_CONDUCTOR_CELESTIA_NODE_HTTP_URL: "http://127.0.0.1:26658"
       ASTRIA_CONDUCTOR_CELESTIA_NODE_WEBSOCKET_URL: "ws://127.0.0.1:26658"
       ASTRIA_CONDUCTOR_CELESTIA_BEARER_TOKEN: ""
+      ASTRIA_CONDUCTOR_CELESTIA_BLOCK_TIME_MS: 12000
       ASTRIA_CONDUCTOR_SEQUENCER_GRPC_URL: "http://sequencer:8080"
       ASTRIA_CONDUCTOR_SEQUENCER_COMETBFT_URL: "http://cometbft:26657"
       ASTRIA_CONDUCTOR_SEQUENCER_BLOCK_TIME_MS: 2000
@@ -78,7 +79,7 @@ services:
       retries: 3
       start_period: 5s
       timeout: 5s
-    image: docker.io/cometbft/cometbft:v0.37.x
+    image: docker.io/cometbft/cometbft:v0.38.x
     environment:
       COMET_BFT_RPC_PORT: 26657
     volumes:
