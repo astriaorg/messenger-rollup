@@ -26,6 +26,7 @@ services:
     image: ghcr.io/astriaorg/composer:latest
     environment:
       ASTRIA_COMPOSER_LOG: "astria_composer=info"
+      ASTRIA_COMPOSER_SEQUENCER_CHAIN_ID: "astria"
       ASTRIA_COMPOSER_API_LISTEN_ADDR: "0.0.0.0:0"
       ASTRIA_COMPOSER_SEQUENCER_URL: "http://cometbft:26657"
       ASTRIA_COMPOSER_ROLLUPS: ""
@@ -38,6 +39,7 @@ services:
       ASTRIA_COMPOSER_PRETTY_PRINT: true
       ASTRIA_COMPOSER_NO_METRICS: true
       ASTRIA_COMPOSER_METRICS_HTTP_LISTENER_ADDR: ""
+      ASTRIA_COMPOSER_BUNDLE_QUEUE_CAPACITY: 40000
       RUST_BACKTRACE: 1
     depends_on:
       rollup:
