@@ -23,7 +23,7 @@ services:
     ports:
       - "8080:8080"
   composer:
-    image: ghcr.io/astriaorg/composer:latest
+    image: ghcr.io/astriaorg/composer:sha-f00b102
     environment:
       ASTRIA_COMPOSER_LOG: "astria_composer=info"
       ASTRIA_COMPOSER_SEQUENCER_CHAIN_ID: "astria"
@@ -47,7 +47,7 @@ services:
       cometbft:
         condition: service_healthy
   conductor:
-    image: ghcr.io/astriaorg/conductor:latest
+    image: ghcr.io/astriaorg/conductor:sha-f00b102
     environment:
       ASTRIA_CONDUCTOR_LOG: "astria_conductor=debug"
       ASTRIA_CONDUCTOR_EXECUTION_RPC_URL: "http://rollup:50051"
@@ -93,7 +93,7 @@ services:
       sequencer:
         condition: service_started
   sequencer:
-    image: ghcr.io/astriaorg/sequencer:latest
+    image: ghcr.io/astriaorg/sequencer:sha-f00b102
     environment:
       ASTRIA_SEQUENCER_LOG: "astria_sequencer=debug"
       ASTRIA_SEQUENCER_LISTEN_ADDR: "0.0.0.0:26658"
