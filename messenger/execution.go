@@ -32,8 +32,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req
 	res := &astriaPb.GenesisInfo{
 		RollupId:                    s.rollupID,
 		SequencerGenesisBlockHeight: uint32(1),
-		CelestiaBaseBlockHeight:     uint32(1),
-		CelestiaBlockVariance:       uint32(1),
+		CelestiaBlockVariance:       uint64(1),
 	}
 	log.WithFields(log.Fields{
 		"rollupId": hex.EncodeToString(res.RollupId),
