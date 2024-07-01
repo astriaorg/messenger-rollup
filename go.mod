@@ -3,24 +3,24 @@ module github.com/astriaorg/messenger-rollup
 go 1.21.3
 
 require (
-	buf.build/gen/go/astria/composer-apis/grpc/go v1.3.0-20240329163554-64ef75007d48.2
+	buf.build/gen/go/astria/composer-apis/grpc/go v1.4.0-20240528191859-5569d2ee7204.2
 	buf.build/gen/go/astria/composer-apis/protocolbuffers/go v1.34.2-20240528191859-5569d2ee7204.2
-	buf.build/gen/go/astria/execution-apis/grpc/go v1.3.0-20240601032207-1bcb86793146.3
-	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.34.1-20240601032207-1bcb86793146.1
-	github.com/astriaorg/go-sequencer-client v0.4.1
+	buf.build/gen/go/astria/execution-apis/grpc/go v1.4.0-20240627184145-202c666b5a8a.2
+	buf.build/gen/go/astria/execution-apis/protocolbuffers/go v1.34.2-20240627184145-202c666b5a8a.2
+	github.com/astriaorg/astria-cli-go/modules/go-sequencer-client v0.0.0-20240630141218-e9b3ec7a77a3
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/rs/cors v1.10.1
 	github.com/sethvargo/go-envconfig v1.0.0
 	github.com/sirupsen/logrus v1.9.0
-	google.golang.org/grpc v1.61.2
+	google.golang.org/grpc v1.62.2
 	google.golang.org/protobuf v1.34.2
 )
 
 require (
-	buf.build/gen/go/astria/primitives/protocolbuffers/go v1.34.2-20240607202648-0eefaac9f5b8.2 // indirect
-	buf.build/gen/go/astria/protocol-apis/protocolbuffers/go v1.34.1-20240517150110-b4ffcca70a25.1 // indirect
-	buf.build/gen/go/astria/sequencerblock-apis/protocolbuffers/go v1.34.1-20240528191859-66d6f20a25a2.1 // indirect
+	buf.build/gen/go/astria/primitives/protocolbuffers/go v1.34.2-20240626163506-691883836b9e.2 // indirect
+	buf.build/gen/go/astria/protocol-apis/protocolbuffers/go v1.34.2-20240627184145-2eaea785eb7d.2 // indirect
+	buf.build/gen/go/astria/sequencerblock-apis/protocolbuffers/go v1.34.2-20240627184145-00f432997496.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -37,7 +37,7 @@ require (
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
-	github.com/golang/glog v1.1.2 // indirect
+	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
@@ -65,8 +65,8 @@ require (
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

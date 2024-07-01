@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	astriaComposerPb "buf.build/gen/go/astria/composer-apis/protocolbuffers/go/astria/composer/v1alpha1"
-	client "github.com/astriaorg/go-sequencer-client/client"
+	client "github.com/astriaorg/astria-cli-go/modules/go-sequencer-client/client"
 
 	log "github.com/sirupsen/logrus"
 )

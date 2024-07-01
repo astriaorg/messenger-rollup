@@ -23,7 +23,7 @@ services:
     ports:
       - "8080:8080"
   composer:
-    image: ghcr.io/astriaorg/composer:sha-fe709de
+    image: ghcr.io/astriaorg/composer:latest
     environment:
       ASTRIA_COMPOSER_LOG: "astria_composer=debug"
       ASTRIA_COMPOSER_SEQUENCER_CHAIN_ID: "astria"
@@ -32,6 +32,7 @@ services:
       ASTRIA_COMPOSER_PRIVATE_KEY_FILE: "/cometbft/config/composer_private_key.hex"
       ASTRIA_COMPOSER_API_LISTEN_ADDR: "0.0.0.0:0"
       ASTRIA_COMPOSER_SEQUENCER_URL: "http://cometbft:26657"
+      ASTRIA_COMPOSER_FEE_ASSET: "nria"
       ASTRIA_COMPOSER_ROLLUPS: ""
       ASTRIA_COMPOSER_MAX_SUBMIT_INTERVAL_MS: 2000
       ASTRIA_COMPOSER_MAX_BYTES_PER_BUNDLE: 200000
@@ -51,7 +52,7 @@ services:
       cometbft:
         condition: service_healthy
   conductor:
-    image: ghcr.io/astriaorg/conductor:sha-fe709de
+    image: ghcr.io/astriaorg/conductor:latest
     environment:
       ASTRIA_CONDUCTOR_LOG: "astria_conductor=debug"
       ASTRIA_CONDUCTOR_EXECUTION_RPC_URL: "http://rollup:50051"
@@ -64,6 +65,7 @@ services:
       ASTRIA_CONDUCTOR_SEQUENCER_COMETBFT_URL: "http://cometbft:26657"
       ASTRIA_CONDUCTOR_SEQUENCER_BLOCK_TIME_MS: 2000
       ASTRIA_CONDUCTOR_SEQUENCER_REQUESTS_PER_SECOND: 500
+      ASTRIA_CONDUCTOR_INITIAL_SEQUENCER_BLOCK_HEIGHT: 2
       ASTRIA_CONDUCTOR_ENABLE_OPTIMISM: false
       ASTRIA_CONDUCTOR_ETHEREUM_L1_URL: ""
       ASTRIA_CONDUCTOR_OPTIMISM_PORTAL_CONTRACT_ADDRESS: ""
@@ -98,7 +100,7 @@ services:
       sequencer:
         condition: service_started
   sequencer:
-    image: ghcr.io/astriaorg/sequencer:sha-fe709de
+    image: ghcr.io/astriaorg/sequencer:latest
     environment:
       ASTRIA_SEQUENCER_LOG: "astria_sequencer=debug"
       ASTRIA_SEQUENCER_LISTEN_ADDR: "0.0.0.0:26658"
