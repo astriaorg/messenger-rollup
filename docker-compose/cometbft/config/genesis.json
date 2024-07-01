@@ -1,34 +1,49 @@
 {
   "app_hash": "",
   "app_state": {
+    "address_prefixes": {
+      "base": "astria"
+    },
     "accounts": [
       {
-        "address": "1c0c490f1b5528d8173c5de46d131160e4b2c0c3",
-        "balance": 1000000000000000000
-      },
-      {
-        "address": "34fec43c7fcab9aef3b3cf8aba855e41ee69ca3a",
-        "balance": 1000000000000000000
-      },
-      {
-        "address": "60709e2d391864b732b4f0f51e387abb76743871",
-        "balance": 1000000000000000000
-      },
-      {
-        "address": "530d88951f58768c027b4f6c9493b7930460f8a4",
+        "address": {
+          "bech32m": "astria1da0mkmu5fl7r5tmqy2ys5a096w3guanwgzrqrz"
+        },
         "balance": 1000000000000000000
       }
     ],
-    "authority_sudo_address": "1c0c490f1b5528d8173c5de46d131160e4b2c0c3",
-    "ibc_sudo_address": "1c0c490f1b5528d8173c5de46d131160e4b2c0c3",
-    "ibc_relayer_addresses": ["1c0c490f1b5528d8173c5de46d131160e4b2c0c3","34fec43c7fcab9aef3b3cf8aba855e41ee69ca3a"],
-    "ibc_params": {
-      "ibc_enabled": true,
-      "inbound_ics20_transfers_enabled": true,
-      "outbound_ics20_transfers_enabled": true
+    "authority_sudo_address": {
+      "bech32m": "astria1da0mkmu5fl7r5tmqy2ys5a096w3guanwgzrqrz"
     },
+    "ibc_sudo_address": {
+      "bech32m": "astria1da0mkmu5fl7r5tmqy2ys5a096w3guanwgzrqrz"
+    },
+    "ibc_relayer_addresses": [
+      {
+        "bech32m": "astria1da0mkmu5fl7r5tmqy2ys5a096w3guanwgzrqrz"
+      },
+      {
+        "bech32m": "astria1xnlvg0rle2u6auane79t4p27g8hxnj36ja960z"
+      }
+    ],
     "native_asset_base_denomination": "nria",
-    "allowed_fee_assets": ["nria"]
+    "ibc_params": {
+      "ibcEnabled": true,
+      "inboundIcs20TransfersEnabled": true,
+      "outboundIcs20TransfersEnabled": true
+    },
+    "allowed_fee_assets": [
+      "nria"
+    ],
+    "fees": {
+      "transfer_base_fee": 12,
+      "sequence_base_fee": 32,
+      "sequence_byte_cost_multiplier": 1,
+      "init_bridge_account_base_fee": 48,
+      "bridge_lock_byte_cost_multiplier": 1,
+      "bridge_sudo_change_fee": 24,
+      "ics20_withdrawal_base_fee": 24
+    }
   },
   "chain_id": "astria",
   "consensus_params": {
