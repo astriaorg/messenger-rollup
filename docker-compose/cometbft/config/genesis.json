@@ -1,44 +1,207 @@
 {
   "app_hash": "",
   "app_state": {
-    "accounts": [
-      {
-        "address": "1c0c490f1b5528d8173c5de46d131160e4b2c0c3",
-        "balance": 1000000000000000000
+    "native_asset_base_denomination": "nria",
+    "fees": {
+      "fee_change": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
       },
-      {
-        "address": "34fec43c7fcab9aef3b3cf8aba855e41ee69ca3a",
-        "balance": 1000000000000000000
+      "bridge_lock": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 1
+        }
       },
-      {
-        "address": "60709e2d391864b732b4f0f51e387abb76743871",
-        "balance": 1000000000000000000
+      "bridge_sudo_change": {
+        "base": {
+          "lo": 24
+        },
+        "multiplier": {
+          "lo": 0
+        }
       },
-      {
-        "address": "530d88951f58768c027b4f6c9493b7930460f8a4",
-        "balance": 1000000000000000000
+      "bridge_unlock": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "fee_asset_change": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "ibc_relay": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "ibc_relayer_change": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "ibc_sudo_change": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "ics20_withdrawal": {
+        "base": {
+          "lo": 24
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "init_bridge_account": {
+        "base": {
+          "lo": 48
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "rollup_data_submission": {
+        "base": {
+          "lo": 32
+        },
+        "multiplier": {
+          "lo": 1
+        }
+      },
+      "sudo_address_change": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "transfer": {
+        "base": {
+          "lo": 12
+        },
+        "multiplier": {
+          "lo": 0
+        }
+      },
+      "validator_update": {
+        "base": {
+          "lo": 0
+        },
+        "multiplier": {
+          "lo": 0
+        }
       }
+    },
+    "allowed_fee_assets": [
+      "nria"
     ],
-    "authority_sudo_address": "1c0c490f1b5528d8173c5de46d131160e4b2c0c3",
-    "ibc_sudo_address": "1c0c490f1b5528d8173c5de46d131160e4b2c0c3",
-    "ibc_relayer_addresses": ["1c0c490f1b5528d8173c5de46d131160e4b2c0c3","34fec43c7fcab9aef3b3cf8aba855e41ee69ca3a"],
-    "ibc_params": {
+    "ibc_parameters": {
       "ibc_enabled": true,
       "inbound_ics20_transfers_enabled": true,
       "outbound_ics20_transfers_enabled": true
     },
-    "native_asset_base_denomination": "nria",
-    "allowed_fee_assets": ["nria"]
+    "address_prefixes": {
+      "base": "astria",
+      "ibcCompat": "astriacompat"
+    },
+    "accounts": [
+      {
+        "address": {
+          "bech32m": "astria1rsxyjrcm255ds9euthjx6yc3vrjt9sxrm9cfgm"
+        },
+        "balance": {
+          "lo": 333333333333333333
+        }
+      },
+      {
+        "address": {
+          "bech32m": "astria1xnlvg0rle2u6auane79t4p27g8hxnj36ja960z"
+        },
+        "balance": {
+          "lo": 333333333333333333
+        }
+      },
+      {
+        "address": {
+          "bech32m": "astria1vpcfutferpjtwv457r63uwr6hdm8gwr3pxt5ny"
+        },
+        "balance": {
+          "lo": 333333333333333333
+        }
+      },
+      {
+        "address": {
+          "bech32m": "astria1qrt4kfc9ggyy548u7rg0d64sgq5c952kzk9tg9"
+        },
+        "balance": {
+          "lo": 333333333333333333
+        }
+      },
+      {
+        "address": {
+          "bech32m": "astria13ahqz4pjqfmynk9ylrqv4fwe4957x2p0h5782u"
+        },
+        "balance": {
+          "lo": 48
+        }
+      },
+      {
+        "address": {
+          "bech32m": "astria1d7zjjljc0dsmxa545xkpwxym86g8uvvwhtezcr"
+        },
+        "balance": {
+          "lo": 69000000
+        }
+      }
+    ],
+    "authority_sudo_address": {
+      "bech32m": "astria1rsxyjrcm255ds9euthjx6yc3vrjt9sxrm9cfgm"
+    },
+    "ibc_sudo_address": {
+      "bech32m": "astria1rsxyjrcm255ds9euthjx6yc3vrjt9sxrm9cfgm"
+    },
+    "ibc_relayer_addresses": [
+      {
+        "bech32m": "astria1rsxyjrcm255ds9euthjx6yc3vrjt9sxrm9cfgm"
+      },
+      {
+        "bech32m": "astria1xnlvg0rle2u6auane79t4p27g8hxnj36ja960z"
+      }
+    ]
   },
   "chain_id": "astria",
   "consensus_params": {
     "block": {
-      "max_bytes": "22020096",
+      "max_bytes": " 1048576",
       "max_gas": "-1"
     },
     "evidence": {
-      "max_age_duration": "172800000000000",
-      "max_age_num_blocks": "100000",
+      "max_age_duration": "1209600000000000",
+      "max_age_num_blocks": " 4000000",
       "max_bytes": "1048576"
     },
     "validator": {
@@ -50,7 +213,7 @@
       "app": "0"
     }
   },
-  "genesis_time": "2024-02-14T19:04:01.339263Z",
+  "genesis_time": "2023-09-22T17:22:35.092832Z",
   "initial_height": "0",
   "validators": [
     {

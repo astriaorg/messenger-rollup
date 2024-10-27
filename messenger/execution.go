@@ -8,41 +8,41 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
-	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1alpha2"
+	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1/executionv1grpc"
+	astriaPb "buf.build/gen/go/astria/execution-apis/protocolbuffers/go/astria/execution/v1"
+	primitivev1 "buf.build/gen/go/astria/primitives/protocolbuffers/go/astria/primitive/v1"
 )
 
-// ExecutionServiceServerV1Alpha2 is a server that implements the ExecutionServiceServer interface.
-type ExecutionServiceServerV1Alpha2 struct {
+// ExecutionServiceServerV1 is a server that implements the ExecutionServiceServer interface.
+type ExecutionServiceServerV1 struct {
 	astriaGrpc.UnimplementedExecutionServiceServer
 	rollupBlocks *RollupBlocks
-	rollupID     []byte
+	rollupID     primitivev1.RollupId
 }
 
-// NewExecutionServiceServerV1Alpha2 creates a new ExecutionServiceServerV1Alpha2.
-func NewExecutionServiceServerV1Alpha2(rollupBlocks *RollupBlocks, rollupID []byte) *ExecutionServiceServerV1Alpha2 {
-	return &ExecutionServiceServerV1Alpha2{
+// NewExecutionServiceServerV1 creates a new ExecutionServiceServerV1.
+func NewExecutionServiceServerV1(rollupBlocks *RollupBlocks, rollupID primitivev1.RollupId) *ExecutionServiceServerV1 {
+	return &ExecutionServiceServerV1{
 		rollupBlocks: rollupBlocks,
 		rollupID:     rollupID,
 	}
 }
 
-func (s *ExecutionServiceServerV1Alpha2) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
+func (s *ExecutionServiceServerV1) GetGenesisInfo(ctx context.Context, req *astriaPb.GetGenesisInfoRequest) (*astriaPb.GenesisInfo, error) {
 	log.Debug("GetGenesisInfo called")
 	res := &astriaPb.GenesisInfo{
-		RollupId:                    s.rollupID,
+		RollupId:                    &s.rollupID,
 		SequencerGenesisBlockHeight: uint32(1),
-		CelestiaBaseBlockHeight:     uint32(1),
-		CelestiaBlockVariance:       uint32(1),
+		CelestiaBlockVariance:       uint64(1),
 	}
 	log.WithFields(log.Fields{
-		"rollupId": hex.EncodeToString(res.RollupId),
+		"rollupId": hex.EncodeToString(res.RollupId.Inner),
 	}).Debug("GetGenesisInfo completed")
 	return res, nil
 }
 
 // GetBlock retrieves a block by its identifier.
-func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astriaPb.GetBlockRequest) (*astriaPb.Block, error) {
+func (s *ExecutionServiceServerV1) GetBlock(ctx context.Context, req *astriaPb.GetBlockRequest) (*astriaPb.Block, error) {
 	log.WithField(
 		"identifier", req.Identifier,
 	).Debug("GetBlock called")
@@ -68,7 +68,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetBlock(ctx context.Context, req *astr
 }
 
 // BatchGetBlocks retrieves multiple blocks by their identifiers.
-func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req *astriaPb.BatchGetBlocksRequest) (*astriaPb.BatchGetBlocksResponse, error) {
+func (s *ExecutionServiceServerV1) BatchGetBlocks(ctx context.Context, req *astriaPb.BatchGetBlocksRequest) (*astriaPb.BatchGetBlocksResponse, error) {
 	log.WithField(
 		"identifiers", req.Identifiers,
 	).Debug("BatchGetBlocks called")
@@ -96,7 +96,7 @@ func (s *ExecutionServiceServerV1Alpha2) BatchGetBlocks(ctx context.Context, req
 }
 
 // ExecuteBlock executes a block and adds it to the blockchain.
-func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
+func (s *ExecutionServiceServerV1) ExecuteBlock(ctx context.Context, req *astriaPb.ExecuteBlockRequest) (*astriaPb.Block, error) {
 	log.WithFields(
 		log.Fields{
 			"prevBlockHash": hex.EncodeToString(req.PrevBlockHash),
@@ -130,7 +130,7 @@ func (s *ExecutionServiceServerV1Alpha2) ExecuteBlock(ctx context.Context, req *
 }
 
 // GetCommitmentState retrieves the current commitment state of the blockchain.
-func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
+func (s *ExecutionServiceServerV1) GetCommitmentState(ctx context.Context, req *astriaPb.GetCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
 	log.Debug("GetCommitmentState called")
 	soft, err := s.rollupBlocks.GetSoftBlock().ToPb()
 	if err != nil {
@@ -156,7 +156,7 @@ func (s *ExecutionServiceServerV1Alpha2) GetCommitmentState(ctx context.Context,
 }
 
 // UpdateCommitmentState updates the commitment state of the blockchain.
-func (s *ExecutionServiceServerV1Alpha2) UpdateCommitmentState(ctx context.Context, req *astriaPb.UpdateCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
+func (s *ExecutionServiceServerV1) UpdateCommitmentState(ctx context.Context, req *astriaPb.UpdateCommitmentStateRequest) (*astriaPb.CommitmentState, error) {
 	log.WithFields(
 		log.Fields{
 			"soft":     req.CommitmentState.Soft.Number,

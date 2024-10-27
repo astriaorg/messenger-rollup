@@ -1,16 +1,19 @@
 package messenger
 
 import (
-	"buf.build/gen/go/astria/composer-apis/grpc/go/astria/composer/v1alpha1/composerv1alpha1grpc"
 	"context"
 	"crypto/ed25519"
 	"fmt"
+
+	"buf.build/gen/go/astria/composer-apis/grpc/go/astria/composer/v1/composerv1grpc"
+	primitivev1 "buf.build/gen/go/astria/primitives/protocolbuffers/go/astria/primitive/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	astriaPb "buf.build/gen/go/astria/astria/protocolbuffers/go/astria/sequencer/v1"
-	astriaComposerPb "buf.build/gen/go/astria/composer-apis/protocolbuffers/go/astria/composer/v1alpha1"
-	client "github.com/astriaorg/go-sequencer-client/client"
+	astriaComposerPb "buf.build/gen/go/astria/composer-apis/protocolbuffers/go/astria/composer/v1"
+	astriaPb "buf.build/gen/go/astria/protocol-apis/protocolbuffers/go/astria/protocol/transaction/v1"
+	bech32m "github.com/astriaorg/astria-cli-go/modules/bech32m"
+	client "github.com/astriaorg/astria-cli-go/modules/go-sequencer-client/client"
 	tendermintPb "github.com/cometbft/cometbft/rpc/core/types"
 
 	log "github.com/sirupsen/logrus"
@@ -22,11 +25,11 @@ type SequencerClient struct {
 	composerClient *grpc.ClientConn
 	signer         *client.Signer
 	nonce          uint32
-	rollupId       []byte
+	rollupId       primitivev1.RollupId
 }
 
 // NewSequencerClient creates a new SequencerClient.
-func NewSequencerClient(sequencerAddr string, composerAddr string, rollupId []byte, private ed25519.PrivateKey) *SequencerClient {
+func NewSequencerClient(sequencerAddr string, composerAddr string, rollupId primitivev1.RollupId, private ed25519.PrivateKey) *SequencerClient {
 	signer := client.NewSigner(private)
 
 	// default tendermint RPC endpoint
@@ -49,7 +52,7 @@ func NewSequencerClient(sequencerAddr string, composerAddr string, rollupId []by
 }
 
 // broadcastTxSync broadcasts a transaction synchronously.
-func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*tendermintPb.ResultBroadcastTx, error) {
+func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.Transaction) (*tendermintPb.ResultBroadcastTx, error) {
 	log.Debug("broadcasting tx")
 	return sc.c.BroadcastTxSync(context.Background(), tx)
 }
@@ -57,10 +60,10 @@ func (sc *SequencerClient) broadcastTxSync(tx *astriaPb.SignedTransaction) (*ten
 func (sc *SequencerClient) SendMessageViaComposer(tx []byte) error {
 	log.Debug("broadcasting tx through composer!")
 
-	grpcCollectorServiceClient := composerv1alpha1grpc.NewGrpcCollectorServiceClient(sc.composerClient)
+	grpcCollectorServiceClient := composerv1grpc.NewGrpcCollectorServiceClient(sc.composerClient)
 	// if the request succeeds, then an empty response will be returned which can be ignored for now
 	_, err := grpcCollectorServiceClient.SubmitRollupTransaction(context.Background(), &astriaComposerPb.SubmitRollupTransactionRequest{
-		RollupId: sc.rollupId,
+		RollupId: &sc.rollupId,
 		Data:     tx,
 	})
 	if err != nil {
@@ -74,19 +77,19 @@ func (sc *SequencerClient) SendMessageViaComposer(tx []byte) error {
 func (sc *SequencerClient) SendMessage(tx []byte) (*tendermintPb.ResultBroadcastTx, error) {
 	log.Debug("sending message")
 
-	unsigned := &astriaPb.UnsignedTransaction{
-		Nonce: sc.nonce,
-		Actions: []*astriaPb.Action{
-			{
-				Value: &astriaPb.Action_SequenceAction{
-					SequenceAction: &astriaPb.SequenceAction{
-						RollupId: sc.rollupId,
-						Data:     tx,
-					},
-				},
+	unsigned := &astriaPb.TransactionBody{
+		Params: &astriaPb.TransactionParams{
+			Nonce:   sc.nonce,
+			ChainId: "astria",
+		},
+		Actions: []*astriaPb.Action{{Value: &astriaPb.Action_RollupDataSubmission{
+			RollupDataSubmission: &astriaPb.RollupDataSubmission{
+				RollupId: &sc.rollupId,
+				Data:     tx,
+				FeeAsset: "nria",
 			},
 		},
-	}
+		}}}
 
 	signed, err := sc.signer.SignTransaction(unsigned)
 	if err != nil {
@@ -94,22 +97,28 @@ func (sc *SequencerClient) SendMessage(tx []byte) (*tendermintPb.ResultBroadcast
 	}
 
 	log.Debugf("submitting tx to sequencer: %s.", tx)
-
+	address, err := bech32m.EncodeFromBytes("astria", sc.signer.Address())
+	if err != nil {
+		return nil, err
+	}
 	resp, err := sc.broadcastTxSync(signed)
 	if err != nil {
 		return nil, err
 	}
 	if resp.Code == 4 {
 		// fetch new nonce
-		newNonce, err := sc.c.GetNonce(context.Background(), sc.signer.Address())
+		newNonce, err := sc.c.GetNonce(context.Background(), address.String())
 		if err != nil {
 			return nil, err
 		}
 		sc.nonce = newNonce
 
 		// create new tx
-		unsigned = &astriaPb.UnsignedTransaction{
-			Nonce:   sc.nonce,
+		unsigned = &astriaPb.TransactionBody{
+			Params: &astriaPb.TransactionParams{
+				Nonce:   sc.nonce,
+				ChainId: "astria",
+			},
 			Actions: unsigned.Actions,
 		}
 		signed, err = sc.signer.SignTransaction(unsigned)

@@ -16,7 +16,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1alpha2/executionv1alpha2grpc"
+	astriaGrpc "buf.build/gen/go/astria/execution-apis/grpc/go/astria/execution/v1/executionv1grpc"
+	primitivev1 "buf.build/gen/go/astria/primitives/protocolbuffers/go/astria/primitive/v1"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
@@ -49,7 +50,7 @@ type App struct {
 	restAddr        string
 	rollupBlocks    *RollupBlocks
 	rollupName      string
-	rollupID        []byte
+	rollupID        primitivev1.RollupId
 	newBlockChan    chan Block
 	wsClients       WSClientList
 	sync.RWMutex
@@ -62,7 +63,10 @@ func NewApp(cfg Config) *App {
 	rollupBlocks := NewRollupBlocks(newBlockChan)
 	router := mux.NewRouter()
 
-	rollupID := sha256.Sum256([]byte(cfg.RollupName))
+	rollupIdBytes := sha256.Sum256([]byte(cfg.RollupName))
+	rollupID := primitivev1.RollupId{
+		Inner: rollupIdBytes[:],
+	}
 
 	// sequencer private key
 	privateKeyBytes, err := hex.DecodeString(cfg.SeqPrivate)
@@ -74,20 +78,20 @@ func NewApp(cfg Config) *App {
 	return &App{
 		executionRPC:    cfg.ConductorRPC,
 		sequencerRPC:    cfg.SequencerRPC,
-		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, cfg.ComposerRpc, rollupID[:], private),
+		sequencerClient: *NewSequencerClient(cfg.SequencerRPC, cfg.ComposerRpc, rollupID, private),
 		restRouter:      router,
 		restAddr:        cfg.RESTApiPort,
 		rollupBlocks:    rollupBlocks,
 		rollupName:      cfg.RollupName,
-		rollupID:        rollupID[:],
+		rollupID:        rollupID,
 		newBlockChan:    newBlockChan,
 		wsClients:       make(WSClientList),
 	}
 }
 
 // makeExecutionServer creates a new ExecutionServiceServer.
-func (a *App) makeExecutionServer() *ExecutionServiceServerV1Alpha2 {
-	return NewExecutionServiceServerV1Alpha2(a.rollupBlocks, a.rollupID)
+func (a *App) makeExecutionServer() *ExecutionServiceServerV1 {
+	return NewExecutionServiceServerV1(a.rollupBlocks, a.rollupID)
 }
 
 // setupRestRoutes sets up the routes for the REST API.
